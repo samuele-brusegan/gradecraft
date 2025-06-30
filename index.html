@@ -1,0 +1,438 @@
+<!-- Frontend HTML/JavaScript (GradeCraft Web App - Esempio Concettuale) -->
+<!DOCTYPE html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>GradeCraft - Integrazione Classeviva</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family: 'Inter', sans-serif;
+                background-color: #f0f2f5;
+            }
+            .container {
+                max-width: 800px;
+                margin: 40px auto;
+                padding: 20px;
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+            .input-field {
+                padding: 10px 15px;
+                border: 1px solid #d1d5db;
+                border-radius: 8px;
+                font-size: 1rem;
+                width: 100%;
+                box-sizing: border-box; /* Include padding and border in the element's total width and height */
+            }
+            .btn {
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: background-color 0.2s ease-in-out;
+            }
+            .btn-primary {
+                background-color: #4f46e5;
+                color: white;
+            }
+            .btn-primary:hover {
+                background-color: #4338ca;
+            }
+            .data-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            .data-table th, .data-table td {
+                border: 1px solid #e5e7eb;
+                padding: 10px;
+                text-align: left;
+            }
+            .data-table th {
+                background-color: #f9fafb;
+                font-weight: 600;
+                color: #374151;
+            }
+            .message-box {
+                background-color: #d1fae5;
+                color: #065f46;
+                padding: 12px;
+                border-radius: 8px;
+                margin-bottom: 20px;
+                text-align: center;
+                font-weight: 600;
+            }
+            .error-message {
+                background-color: #fee2e2;
+                color: #991b1b;
+            }
+            .loading-spinner {
+                border: 4px solid rgba(0, 0, 0, 0.1);
+                border-left-color: #4f46e5;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                animation: spin 1s linear infinite;
+                display: inline-block;
+                vertical-align: middle;
+                margin-left: 10px;
+                display: none; /* Hidden by default */
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+        <div class="container p-8">
+            <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">GradeCraft - Integrazione Classeviva</h1>
+
+            <div id="message-area" class="hidden"></div>
+
+            <div class="mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Accedi a Classeviva</h2>
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Username Classeviva:</label>
+                    <input type="text" id="username" class="input-field" placeholder="Inserisci il tuo username">
+                </div>
+                <div class="mb-4">
+                    <label for="password" class="block text-gray-700 text-sm font-medium mb-2">Password Classeviva:</label>
+                    <input type="password" id="password" class="input-field" placeholder="Inserisci la tua password">
+                </div>
+                <button id="loginBtn" class="btn btn-primary w-full flex items-center justify-center">
+                    Accedi e Carica Dati
+                    <span id="loadingSpinner" class="loading-spinner"></span>
+                </button>
+                <div id="profile-selection-area" class="hidden mt-4">
+                    <h3 class="text-lg font-medium mb-2 text-gray-700">Seleziona un profilo:</h3>
+                    <select id="profile-select" class="input-field mb-2"></select>
+                    <button id="selectProfileBtn" class="btn btn-primary w-full">Seleziona Profilo</button>
+                </div>
+            </div>
+
+            <hr class="my-8 border-gray-200">
+
+            <div id="data-section" class="hidden">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Dati Recuperati da Classeviva</h2>
+
+                <div class="mb-6">
+                    <h3 class="text-lg font-medium mb-3 text-gray-700">Medie e Voti:</h3>
+                    <div id="grades-output">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Materia</th>
+                                <th>Voto</th>
+                                <th>Data</th>
+                                <th>Descrizione</th>
+                            </tr>
+                            </thead>
+                            <tbody id="grades-table-body">
+                            <!-- I voti verranno inseriti qui -->
+                            </tbody>
+                        </table>
+                        <p id="no-grades-message" class="text-gray-600 mt-4 hidden">Nessun voto trovato.</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-medium mb-3 text-gray-700">Cronologia Verifiche / Argomenti:</h3>
+                    <div id="topics-output">
+                        <table class="data-table">
+                            <thead>
+                            <tr>
+                                <th>Materia</th>
+                                <th>Argomento</th>
+                                <th>Data</th>
+                            </tr>
+                            </thead>
+                            <tbody id="topics-table-body">
+                            <!-- Gli argomenti verranno inseriti qui -->
+                            </tbody>
+                        </table>
+                        <p id="no-topics-message" class="text-gray-600 mt-4 hidden">Nessun argomento trovato.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const usernameInput = document.getElementById('username');
+                const passwordInput = document.getElementById('password');
+                const loginBtn = document.getElementById('loginBtn');
+                const dataSection = document.getElementById('data-section');
+                const gradesTableBody = document.getElementById('grades-table-body');
+                const topicsTableBody = document.getElementById('topics-table-body');
+                const noGradesMessage = document.getElementById('no-grades-message');
+                const noTopicsMessage = document.getElementById('no-topics-message');
+                const messageArea = document.getElementById('message-area');
+                const loadingSpinner = document.getElementById('loadingSpinner');
+                const profileSelectionArea = document.getElementById('profile-selection-area');
+                const profileSelect = document.getElementById('profile-select');
+                const selectProfileBtn = document.getElementById('selectProfileBtn');
+
+                let currentChoices = []; // Per memorizzare le scelte multi-account
+
+                // URL base del backend PHP.
+                // ********************************************************************************
+                // ** IMPORTANTISSIMO: Questo URL deve corrispondere esattamente a come hai configurato **
+                // ** il tuo server web per reindirizzare le richieste API al tuo script PHP.      **
+                // ** **
+                // ** ESEMPI DI CONFIGURAZIONE E backendBaseUrl:                                   **
+                // ** **
+                // ** 1. Se il tuo file PHP si chiama api.php e si trova nella root del dominio, e **
+                // ** hai configurato .htaccess (per Apache) come segue:                       **
+                // ** (Contenuto di .htaccess nella root):                                      **
+                // ** RewriteEngine On                                                          **
+                // ** RewriteCond %{REQUEST_FILENAME} !-f                                       **
+                // ** RewriteCond %{REQUEST_FILENAME} !-d                                       **
+                // ** RewriteRule ^api/(.*)$ api.php?path=$1 [L,QSA]                            **
+                // ** Allora:                                                                   **
+                // ** const backendBaseUrl = 'http://localhost/api.php?path=';                   **
+                // ** Oppure, se la tua installazione locale è ad esempio 'http://localhost/gradecraft/': **
+                // ** const backendBaseUrl = 'http://localhost/gradecraft/api.php?path=';        **
+                // ** **
+                // ** 2. Se non usi la riscrittura URL e chiami direttamente api.php, ma vuoi   **
+                // ** specificare il percorso come parametro:                                   **
+                // ** const backendBaseUrl = 'http://localhost/api.php?path=';                   **
+                // ** **
+                // ** TEST: Prova a navigare a 'http://localhost/api.php?path=login' nel browser. **
+                // ** Dovresti vedere una risposta JSON che indica "Endpoint API non specificato"**
+                // ** o un messaggio di errore JSON da PHP. Se vedi HTML, la configurazione non va. **
+                // ********************************************************************************
+                const backendBaseUrl = 'api.php?path='; // Adatta questo al tuo setup PHP
+
+                // Funzione per mostrare messaggi
+                function showMessage(message, type = 'success') {
+                    messageArea.textContent = message;
+                    messageArea.className = 'message-box'; // Reset class
+                    if (type === 'error') {
+                        messageArea.classList.add('error-message');
+                    } else {
+                        messageArea.classList.add('message-box'); // Default for success/info
+                    }
+                    messageArea.classList.remove('hidden');
+                }
+
+                // Funzione per nascondere messaggi
+                function hideMessage() {
+                    messageArea.classList.add('hidden');
+                    messageArea.textContent = '';
+                }
+
+                // Funzione per mostrare o nascondere lo spinner di caricamento
+                function toggleLoading(isLoading) {
+                    if (isLoading) {
+                        loadingSpinner.style.display = 'inline-block';
+                        loginBtn.disabled = true;
+                        selectProfileBtn.disabled = true; // Disabilita anche il bottone di selezione profilo
+                    } else {
+                        loadingSpinner.style.display = 'none';
+                        loginBtn.disabled = false;
+                        selectProfileBtn.disabled = false;
+                    }
+                }
+
+                async function fetchClassevivaData(ident = null) {
+                    const username = usernameInput.value;
+                    const password = passwordInput.value;
+
+                    if (!username || !password) {
+                        showMessage('Per favore, inserisci username e password.', 'error');
+                        return;
+                    }
+
+                    hideMessage();
+                    toggleLoading(true);
+                    dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
+                    profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo
+
+                    try {
+                        const loginResponse = await fetch(`${backendBaseUrl}login`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', },
+                            body: JSON.stringify({ username, password, ident }),
+                        });
+
+                        // Tentativo di leggere la risposta come JSON.
+                        // Se fallisce (perché c'è output extra), leggiamo come testo.
+                        let result;
+                        let responseText = await loginResponse.text(); // Legge sempre come testo prima
+                        console.log(responseText);
+                        try {
+                            result = JSON.parse(responseText); // Tenta di parsare come JSON
+                        } catch (e) {
+                            console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
+                            result = {
+                                status: "non_json_output",
+                                message: "Il backend ha inviato un output non JSON. Controlla la console per il debug del PHP.",
+                                rawResponse: responseText,
+                            };
+                        }
+
+                        if (result.status === "non_json_output") {
+                            // Gestisce il caso in cui il PHP stampa debug output
+                            showMessage(`Errore: ${result.message}`, 'error');
+                            messageArea.innerHTML += result.rawResponse;
+                            console.warn("Risposta PHP non JSON:", result.rawResponse);
+                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
+                        }
+                        if (result.status === "602") {
+                            // Gestisce il caso in cui il PHP stampa debug output
+                            showMessage(`Sei già loggato!`);
+                        }
+
+
+                        /* else if (!loginResponse.ok) {
+                            throw new Error(result.message || 'Errore sconosciuto durante il login.');
+                        } else if (result.status === "multi_account") {
+                            currentChoices = result.choices;
+                            profileSelect.innerHTML = ''; // Pulisce le opzioni
+                            currentChoices.forEach(choice => {
+                                const option = document.createElement('option');
+                                option.value = choice.ident;
+                                option.textContent = `${choice.name} (${choice.school})`;
+                                profileSelect.appendChild(option);
+                            });
+                            profileSelectionArea.classList.remove('hidden');
+                            showMessage('Multi-account rilevato. Seleziona un profilo.', 'info');
+                        } else if (result.status === "success") {
+                            showMessage('Accesso a Classeviva riuscito! Caricamento dati in corso...');
+                            profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo se il login è diretto
+
+                            // Passo 2: Recupero voti
+                            const gradesResponse = await fetch(`${backendBaseUrl}grades`);
+                            const grades = await gradesResponse.json();
+                            displayGrades(grades);
+
+                            // Passo 3: Recupero argomenti/cronologia verifiche
+                            const topicsResponse = await fetch(`${backendBaseUrl}topics`);
+                            const topics = await topicsResponse.json();
+                            displayTopics(topics);
+
+                            dataSection.classList.remove('hidden'); // Mostra la sezione dati
+                            showMessage('Dati di Classeviva caricati con successo!');
+                        } else {
+                            // Questo caso dovrebbe essere catturato da !loginResponse.ok ma per sicurezza
+                            throw new Error(result.message || 'Errore MOLTO imprevisto nel login.');
+                        }*/
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `/*Assicurati che il backend PHP sia configurato correttamente e accessibile.`*/, 'error');
+                    } finally {
+                        toggleLoading(false);
+                    }
+                }
+
+                async function fetchClassevivaVoti() {
+                    const username = usernameInput.value;
+                    const password = passwordInput.value;
+
+                    if (!username || !password) {
+                        showMessage('Per favore, inserisci username e password.', 'error');
+                        return;
+                    }
+
+                    hideMessage();
+                    toggleLoading(true);
+                    dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
+                    profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo
+
+                    try {
+                        const gradesResponse = await fetch(`${backendBaseUrl}grades`, {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json', },
+                            // body: JSON.stringify({ username, password, ident }),
+                        });
+
+                        // Tentativo di leggere la risposta come JSON.
+                        // Se fallisce (perché c'è output extra), leggiamo come testo.
+                        let result;
+                        let responseText = await gradesResponse.text(); // Legge sempre come testo prima
+                        console.log(responseText);
+                        try {
+                            result = JSON.parse(responseText); // Tenta di parsare come JSON
+                        } catch (e) {
+                            console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
+                            result = {
+                                status: "non_json_output",
+                                message: "Il backend ha inviato un output non JSON. Controlla la console per il debug del PHP.",
+                                rawResponse: responseText,
+                            };
+                        }
+
+                        if (result.status === "non_json_output") {
+                            // Gestisce il caso in cui il PHP stampa debug output
+                            showMessage(`Errore: ${result.message}`, 'error');
+                            messageArea.innerHTML += result.rawResponse;
+                            console.warn("Risposta PHP non JSON:", result.rawResponse);
+                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
+                        }
+                        displayGrades(result["grades"])
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `/*Assicurati che il backend PHP sia configurato correttamente e accessibile.`*/, 'error');
+                    } finally {
+                        toggleLoading(false);
+                    }
+                }
+
+                loginBtn.addEventListener('click', () => {
+                    fetchClassevivaData()
+                    fetchClassevivaVoti()
+                });
+
+                selectProfileBtn.addEventListener('click', () => {
+                    const selectedIdent = profileSelect.value;
+                    if (selectedIdent) {
+                        fetchClassevivaData(selectedIdent);
+                    } else {
+                        showMessage('Per favore, seleziona un profilo.', 'error');
+                    }
+                });
+
+                function displayGrades(grades) {
+                    console.log(grades)
+                    dataSection.classList.remove('hidden');
+                    gradesTableBody.innerHTML = ''; // Pulisce la tabella
+                    if (grades !== null && grades.length > 0) {
+                        noGradesMessage.classList.add('hidden');
+                        grades.forEach(grade => {
+                            console.log(grade)
+                            const row = gradesTableBody.insertRow();
+                            row.insertCell().textContent = grade["subjectDesc"];
+                            row.insertCell().textContent = grade["displayValue"];
+                            row.insertCell().textContent = grade["evtDate"];
+                            row.insertCell().textContent = grade["notesForFamily"];
+                        });
+                    } else {
+                        noGradesMessage.classList.remove('hidden');
+                    }
+                }
+
+                function displayTopics(topics) {
+                    topicsTableBody.innerHTML = ''; // Pulisce la tabella
+                    if (topics && topics.length > 0) {
+                        noTopicsMessage.classList.add('hidden');
+                        topics.forEach(topic => {
+                            const row = topicsTableBody.insertRow();
+                            row.insertCell().textContent = topic.materia;
+                            row.insertCell().textContent = topic.argomento;
+                            row.insertCell().textContent = topic.data;
+                        });
+                    } else {
+                        noTopicsMessage.classList.remove('hidden');
+                    }
+                }
+            });
+        </script>
+    </body>
+</html>

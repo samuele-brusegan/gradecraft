@@ -1,0 +1,13 @@
+# .htaccess (nella cartella 'gradecraft')
+RewriteEngine On
+# IMPORTANTE: Questa RewriteBase deve corrispondere al percorso URL della tua cartella 'gradecraft'.
+# Basandoci sul tuo screenshot (localhost/js/gradecraft/), dovrebbe essere:
+RewriteBase /js/gradecraft/
+# Se la tua cartella 'gradecraft' fosse direttamente nella root del tuo server web (es. localhost/gradecraft/),
+# allora sarebbe: RewriteBase /gradecraft/
+# Se fosse nella root assoluta del server (es. localhost/), sarebbe: RewriteBase /
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+# Questa regola reindirizza le richieste come /api/login a php/api.php?path=login
+RewriteRule ^api/(.*)$ php/api.php?path=$1 [L,QSA]
