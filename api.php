@@ -1,49 +1,14 @@
 <?php
-// Backend PHP (api.php)
-// Questo codice è una base "irrobustita" per interagire con Classeviva.
-// Le sezioni con commenti dettagliati indicano dove dovrai inserire
-// la logica specifica di interazione con l'API non pubblica di Classeviva
-// tramite richieste HTTP (cURL).
+/*
+ * Copyright (c) 2025. Brusegan Samuele, Davanzo Andrea
+ * Questo file fa parte di GradeCraft ed è rilasciato
+ * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
+ */
 
 include_once 'User.php';
 include_once 'collegamenti.php';
 $c = new Collegamenti();
 session_start();
-// Abilita il reporting degli errori per il debug (da disabilitare in produzione)
-/*ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
-
-// *** INIZIO TEST RAPIDO DI DIAGNOSI: LASCIARE PER ORA, POI RIMUOVERE ***
-// Se stai riscontrando "Endpoint non trovato o metodo non supportato.", aggiungi
-// queste righe per capire cosa il backend PHP sta effettivamente ricevendo.
-// Controlla l'output nella console del browser (Network tab -> Response)
-// o nei log degli errori del server.
-// error_log("GET parameters: " . print_r($_GET, true));
-// error_log("Request Method: " . $_SERVER['REQUEST_METHOD']);
-// Se vuoi vedere l'output direttamente nella risposta API (temporaneamente):
-// var_dump($_GET);
-// var_dump($_SERVER['REQUEST_METHOD']);
-// *** FINE TEST RAPIDO DI DIAGNOSI ***
-
-// Inizia la sessione PHP per memorizzare dati tra le richieste (es. cookie di Classeviva)
-session_start();
-
-// Configurazione CORS
-// In produzione, sostituisci '*' con il dominio esatto del tuo frontend (es. 'https://gradecraft.tuo-dominio.com')
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Content-Type: application/json; charset=UTF-8");
-
-const CLIENT_USER_AGENT = 'CVVS/std/4.1.7 Android/10';
-const CLIENT_DEV_APIKEY = 'Tg1NWEwNGIgIC0K';
-const CLIENT_CONTENT_TP = 'application/json';
-
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}*/
 
 class ClassevivaIntegration {
     private $usr;
@@ -51,6 +16,10 @@ class ClassevivaIntegration {
     public function __construct() {}
     
     public function login($identity = null) {
+        //Dev'esistere un utente da loggare
+        if ($this -> usr == null) return false;
+
+        //Verifico di non essere già loggato
         if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username'])) ) {
             if($_SESSION['classeviva_ident'] == $this -> usr -> uid || $_SESSION['classeviva_username'] == $this -> usr -> uid) {
                 $this -> usr -> token = $_SESSION['classeviva_auth_token'];
@@ -58,105 +27,19 @@ class ClassevivaIntegration {
             }
         }
 
-        if ($this -> usr == null) return false;
         $resp = $this -> usr -> login();
-        $_SESSION['classeviva_auth_token'] = $this -> usr -> token;
-        $_SESSION['classeviva_ident'] = $this -> usr -> ident;
-        $_SESSION['classeviva_username'] = $this -> usr -> uid;
+        //TODO: Verificare che il login sia andato a buon fine
+
+        //Salvo in sessione le informazioni restituitemi
+        $_SESSION['classeviva_auth_token']  = $this -> usr -> token;
+        $_SESSION['classeviva_ident']       = $this -> usr -> ident;
+        $_SESSION['classeviva_username']    = $this -> usr -> uid;
         return $resp;
-        /*global $c;
-        $loginUrl = $c -> login;
-        $username = $this->usr->username;
-        $password = $this->usr->password;
-
-        $headerRequired = array(
-            'Content-Type: application/json',
-            'User-Agent: '      . CLIENT_USER_AGENT,
-            'X-Dev-Apikey: '    . CLIENT_DEV_APIKEY,
-            'X-Content-Type: '  . CLIENT_CONTENT_TP
-        );
-
-//        $data = array(
-//            'ident' => null,
-//            'pass'  => $password,
-//            'uid'   => $username
-//        );
-        $data = '{{"ident": null, "pass": "'.$password.'", "uid": "'.$username.'"}}';
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $loginUrl);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headerRequired);
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        $decoded = json_decode($response, true);
-        $status = $decoded['statusCode'];
-
-        if ($status === 200) {
-            $this -> usr -> setRawData($decoded);
-            $this -> usr -> inizio = $decoded["release"];
-            $this -> usr -> fine = $decoded["expire"];
-            $this -> usr -> _token = $decoded["token"];
-            return true;
-        } elseif ($status === 422) {
-            echo "Errore di autenticazione";
-            return false;
-        } else {
-            echo json_encode($decoded);
-            return false;
-        }*/
     }
     public function getGrades() {
-        //print_r($this -> usr);
+
         if ($this -> usr == null) return false;
         return $this -> usr -> getVoti();
-        /*global $c;
-        $loginUrl = $c -> login;
-        $username = $this->usr->username;
-        $password = $this->usr->password;
-
-        $headerRequired = array(
-            'Content-Type: application/json',
-            'User-Agent: '      . CLIENT_USER_AGENT,
-            'X-Dev-Apikey: '    . CLIENT_DEV_APIKEY,
-            'X-Content-Type: '  . CLIENT_CONTENT_TP
-        );
-
-//        $data = array(
-//            'ident' => null,
-//            'pass'  => $password,
-//            'uid'   => $username
-//        );
-        $data = '{{"ident": null, "pass": "'.$password.'", "uid": "'.$username.'"}}';
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $loginUrl);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headerRequired);
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        $decoded = json_decode($response, true);
-        $status = $decoded['statusCode'];
-
-        if ($status === 200) {
-            $this -> usr -> setRawData($decoded);
-            $this -> usr -> inizio = $decoded["release"];
-            $this -> usr -> fine = $decoded["expire"];
-            $this -> usr -> _token = $decoded["token"];
-            return true;
-        } elseif ($status === 422) {
-            echo "Errore di autenticazione";
-            return false;
-        } else {
-            echo json_encode($decoded);
-            return false;
-        }*/
     }
 
     public function createUser($username, $password): User {

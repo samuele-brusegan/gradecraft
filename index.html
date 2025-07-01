@@ -1,4 +1,9 @@
-<!-- Frontend HTML/JavaScript (GradeCraft Web App - Esempio Concettuale) -->
+<!--
+  ~ Copyright (c) 2025. Brusegan Samuele, Davanzo Andrea
+  ~ Questo file fa parte di GradeCraft ed è rilasciato
+  ~ sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
+  -->
+
 <!DOCTYPE html>
 <html lang="it">
     <head>
@@ -132,9 +137,7 @@
                                 <th>Descrizione</th>
                             </tr>
                             </thead>
-                            <tbody id="grades-table-body">
-                            <!-- I voti verranno inseriti qui -->
-                            </tbody>
+                            <tbody id="grades-table-body"></tbody>
                         </table>
                         <p id="no-grades-message" class="text-gray-600 mt-4 hidden">Nessun voto trovato.</p>
                     </div>
@@ -151,9 +154,7 @@
                                 <th>Data</th>
                             </tr>
                             </thead>
-                            <tbody id="topics-table-body">
-                            <!-- Gli argomenti verranno inseriti qui -->
-                            </tbody>
+                            <tbody id="topics-table-body"></tbody>
                         </table>
                         <p id="no-topics-message" class="text-gray-600 mt-4 hidden">Nessun argomento trovato.</p>
                     </div>
@@ -330,6 +331,52 @@
                         toggleLoading(false);
                     }
                 }
+                /*async function fetchClasseviva(requestedMethod,) {
+                    hideMessage();
+                    toggleLoading(true);
+
+                    try {
+                        if ()
+
+
+                        const gradesResponse = await fetch(`${backendBaseUrl}${path}`, {
+                            method: `${method}`,
+                            headers: { 'Content-Type': 'application/json', },
+                        });
+
+                        // Tentativo di leggere la risposta come JSON.
+                        // Se fallisce (perché c'è output extra), leggiamo come testo.
+                        let result;
+                        let responseText = await gradesResponse.text(); // Legge sempre come testo prima
+                        console.log(responseText);
+                        try {
+                            result = JSON.parse(responseText); // Tenta di parsare come JSON
+                        } catch (e) {
+                            console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
+                            result = {
+                                status: "non_json_output",
+                                message: "Il backend ha inviato un output non JSON. Controlla la console per il debug del PHP.",
+                                rawResponse: responseText,
+                            };
+                        }
+
+                        if (result.status === "non_json_output") {
+                            // Gestisce il caso in cui il PHP stampa debug output
+                            showMessage(`Errore: ${result.message}`, 'error');
+                            messageArea.innerHTML += result.rawResponse;
+                            console.warn("Risposta PHP non JSON:", result.rawResponse);
+                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
+                        }
+                        displayGrades(result["grades"])
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `, 'error');
+                    } finally {
+                        toggleLoading(false);
+                    }
+                }*/
+
 
                 async function fetchClassevivaVoti() {
                     const username = usernameInput.value;
