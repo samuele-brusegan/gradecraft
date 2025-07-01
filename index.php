@@ -95,7 +95,7 @@
                 width: 24px;
                 height: 24px;
                 animation: spin 1s linear infinite;
-                display: inline-block;
+                /*display: inline-block;*/
                 vertical-align: middle;
                 margin-left: 10px;
                 display: none; /* Hidden by default */
@@ -126,11 +126,11 @@
                     Accedi e Carica Dati
                     <span id="loadingSpinner" class="loading-spinner"></span>
                 </button>
-                <div id="profile-selection-area" class="hidden mt-4">
-                    <h3 class="text-lg font-medium mb-2 text-gray-700">Seleziona un profilo:</h3>
-                    <select id="profile-select" class="input-field mb-2"></select>
-                    <button id="selectProfileBtn" class="btn btn-primary w-full">Seleziona Profilo</button>
-                </div>
+<!--                <div id="profile-selection-area" class="hidden mt-4">-->
+<!--                    <h3 class="text-lg font-medium mb-2 text-gray-700">Seleziona un profilo:</h3>-->
+<!--                    <select id="profile-select" class="input-field mb-2"></select>-->
+<!--                    <button id="selectProfileBtn" class="btn btn-primary w-full">Seleziona Profilo</button>-->
+<!--                </div>-->
             </div>
 
             <hr class="my-8 border-gray-200">
@@ -209,7 +209,7 @@
                 const profileSelect = document.getElementById('profile-select');
                 const selectProfileBtn = document.getElementById('selectProfileBtn');
 
-                let currentChoices = []; // Per memorizzare le scelte multi-account
+                //let currentChoices = []; // Per memorizzare le scelte multi-account
                 const backendBaseUrl = 'api.php?path='; // Adatta questo al tuo setup PHP
 
                 //if (<?php //=($loggedIn)?'true':'false'?>//) {
@@ -483,7 +483,6 @@
 
                         let result;
                         let responseText = await gradesResponse.text();
-                        console.log(responseText);
                         try {
                             result = JSON.parse(responseText);
                         } catch (e) {
@@ -528,21 +527,47 @@
                     }
                 });
 
-                function displayGrades(grades) {
+                function displayGrades(grades, page=0) {
                     //console.log(grades)
                     console.log("Display grades")
                     dataSection.classList.remove('hidden');
                     gradesTableBody.innerHTML = ''; // Pulisce la tabella
                     if (grades !== null && grades.length > 0) {
                         noGradesMessage.classList.add('hidden');
+                        let gradeNum = 0;
+                        let PAGE_LIMIT = 10;
                         grades.forEach(grade => {
-                            //console.log(grade)
-                            const row = gradesTableBody.insertRow();
-                            row.insertCell().textContent = grade["subjectDesc"];
-                            row.insertCell().textContent = grade["displayValue"];
-                            row.insertCell().textContent = grade["evtDate"];
-                            row.insertCell().textContent = grade["notesForFamily"];
+
+                            if (gradeNum >= (page * PAGE_LIMIT) && gradeNum < ((page + 1) * PAGE_LIMIT)) {
+                                const row = gradesTableBody.insertRow();
+                                row.insertCell().textContent = grade["subjectDesc"];
+                                row.insertCell().textContent = grade["displayValue"];
+                                row.insertCell().textContent = grade["evtDate"];
+                                row.insertCell().textContent = grade["notesForFamily"];
+                            }
+                            gradeNum++;
                         });
+
+                        let pageBnts = document.createElement('div');
+                        pageBnts.display = 'flex';
+                        pageBnts.justifyContent = 'justify-between';
+
+                        let nextPageBtn = document.createElement('button');
+                        nextPageBtn.textContent = 'Next Page';
+                        nextPageBtn.addEventListener('click', () => displayGrades(grades, page + 1))
+                        nextPageBtn.classList.add('btn');
+                        nextPageBtn.classList.add('btn-primary');
+                        pageBnts.appendChild(nextPageBtn);
+
+                        let prevPageBtn = document.createElement('button');
+                        prevPageBtn.textContent = 'Prev Page';
+                        prevPageBtn.classList.add('btn');
+                        prevPageBtn.classList.add('btn-primary');
+                        prevPageBtn.addEventListener('click', () => displayGrades(grades, page - 1))
+                        pageBnts.appendChild(prevPageBtn);
+
+                        gradesTableBody.appendChild(pageBnts);
+
                     } else {
                         noGradesMessage.classList.remove('hidden');
                     }
