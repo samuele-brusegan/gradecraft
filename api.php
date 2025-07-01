@@ -14,13 +14,69 @@ class ClassevivaIntegration {
     private $usr;
 
     public function __construct() {}
-    
-    public function login($identity = null) {
+
+    public function createUser($username, $password): User {
+        $usr = new User($username, $password);
+        $this -> usr = $usr;
+        return $usr;
+    }
+    public function loadUser(): User|bool {
+        //se c'è un utente in sessione
+        if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username'])) ) {
+            $uid = $_SESSION['classeviva_username'];
+            $pwd = $_SESSION['classeviva_password'];
+
+            //Se la sessione non è expired
+            if ( date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date'] ) {
+
+                $this -> usr          = new User($uid, $pwd);
+                $this -> usr -> token = $_SESSION['classeviva_auth_token'];
+                $this -> usr -> ident = $_SESSION['classeviva_ident']     ;
+                $this -> usr -> uid   = $_SESSION['classeviva_username']  ;
+                $this -> usr -> pwd   = $_SESSION['classeviva_password']  ;
+                $this -> usr -> expDt = $_SESSION['classeviva_session_expiration_date'];
+                $this -> usr -> reqDt = $_SESSION['classeviva_session_request_date'];
+                $this -> usr -> is_logged_in = true;
+                return $this -> usr;
+            } else {
+                $this -> usr = $this -> createUser($uid, $pwd);
+                $this -> login(); // Passa l'ident al metodo di login
+                return $this -> usr;
+            }
+        } else {
+            return false;
+        }
+    }
+    public function buildUser($lr): User|bool {
+        //se c'è un utente in sessione
+        //print_r($lr);
+
+        $ident      = $lr['ident'];
+        $firstName  = $lr['firstName'];
+        $lastName   = $lr['lastName'];
+        $token      = $lr['token'];
+        $tokenAP    = $lr['tokenAP'];
+        $expire     = $lr['expire'];
+        $release    = $lr['release'];
+        $pwd        = $_SESSION['classeviva_password'] ?? null;
+
+        $this -> usr          = new User($ident, $pwd);
+        $this -> usr -> token = $token;
+        $this -> usr -> ident = $ident;
+        $this -> usr -> uid   = $ident;
+        $this -> usr -> pwd   = $pwd;
+        $this -> usr -> expDt = $expire;
+        $this -> usr -> reqDt = $release;
+        $this -> usr -> is_logged_in = true;
+        return $this -> usr;
+    }
+
+    public function login() {
         //Dev'esistere un utente da loggare
         if ($this -> usr == null) return false;
 
         //Verifico di non essere già loggato
-        if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username'])) ) {
+        if (isset($_SESSION['classeviva_auth_token']) && date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date'] && false ) {
             if($_SESSION['classeviva_ident'] == $this -> usr -> uid || $_SESSION['classeviva_username'] == $this -> usr -> uid) {
                 $this -> usr -> token = $_SESSION['classeviva_auth_token'];
                 return array("status" => "602", "studentId" => $_SESSION['classeviva_ident'], "username" => $_SESSION['classeviva_username']);
@@ -34,38 +90,23 @@ class ClassevivaIntegration {
         $_SESSION['classeviva_auth_token']  = $this -> usr -> token;
         $_SESSION['classeviva_ident']       = $this -> usr -> ident;
         $_SESSION['classeviva_username']    = $this -> usr -> uid;
+        $_SESSION['classeviva_password']    = $this -> usr -> pwd;
+
+        $_SESSION['classeviva_session_expiration_date'] = $this -> usr -> expDt;
+        $_SESSION['classeviva_session_request_date']    = $this -> usr -> reqDt;
         return $resp;
     }
     public function getGrades() {
-
+        //Dev'esistere un utente
         if ($this -> usr == null) return false;
+        //Restituisco
         return $this -> usr -> getVoti();
     }
-
-    public function createUser($username, $password): User {
-        $usr = new User($username, $password);
-        $this -> usr = $usr;
-
-        // Recupera il token di autenticazione e l'ID studente dalla sessione PHP, se esistono.
-        //TODO: verifica che i tocken salvati siano coerenti con lo usr
-        /*if (isset($_SESSION['classeviva_auth_token']) && isset($_SESSION['classeviva_student_id'])) {
-            $this->authToken = $_SESSION['classeviva_auth_token'];
-            $this->studentId = $_SESSION['classeviva_student_id'];
-        }*/
-        return $usr;
-    }
-    public function loadUser(): User|bool {
-        //se c'è un utente in sessione
-        if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username'])) ) {
-            $this -> usr          = new User();
-            $this -> usr -> token = $_SESSION['classeviva_auth_token'];
-            $this -> usr -> ident = $_SESSION['classeviva_ident']     ;
-            $this -> usr -> uid   = $_SESSION['classeviva_username']  ;
-            $this -> usr -> is_logged_in = true;
-            return $this -> usr;
-        } else {
-            return false;
-        }
+    public function getSubjects() {
+        //Dev'esistere un utente
+        if ($this -> usr == null) return false;
+        //Restituisco
+        return $this -> usr -> getSubjects();
     }
 }
 
@@ -84,33 +125,23 @@ switch ($_SERVER['REQUEST_METHOD'] . ':' . $request_path) {
         $username = $input['username'] ?? '';
         $password = $input['password'] ?? '';
         $ident = $input['ident'] ?? null; // Aggiunto per supportare la selezione multi-account
-        
+
         if (empty($username) || empty($password)) {
             http_response_code(601); // Non inseriti usr || pwd
             echo json_encode(["message" => "Username e password sono richiesti."]);
             exit();
         }
-        
+
         $cvApi = new ClassevivaIntegration();
         $user = $cvApi -> createUser($username, $password);
         $result = $cvApi -> login($ident); // Passa l'ident al metodo di login
         echo json_encode($result);
-        //echo json_encode($result);
-        //print_r($result);
-    
-        /*if ($result['status'] === "success") {
-            http_response_code(200);
-            echo json_encode(["message" => "Login riuscito.", "studentId" => $result['studentId']]);
+        break;
+    case 'POST:fastLogin':
+        $llr = json_decode(file_get_contents('php://input'), true);
 
-        } elseif ($result['status'] === "multi_account") {
-            http_response_code(200); // Ritorna 200 ma con le scelte
-            echo json_encode($result); // Invia le scelte al frontend
-
-        } else {
-            http_response_code(600); // My generic error
-            echo json_encode(["message" => $result['message']]);
-
-        }*/
+        $cvApi = new ClassevivaIntegration();
+        $user = $cvApi -> buildUser($llr);
         break;
     
     case 'GET:grades':
@@ -123,23 +154,23 @@ switch ($_SERVER['REQUEST_METHOD'] . ':' . $request_path) {
             echo json_encode(["message" => $grades['error']]);
         } else {
             http_response_code(200);
-//            echo "YESS!";
             echo json_encode($grades);
         }
         break;
-    
-    /*case 'GET:topics':
+
+    case 'GET:subjects':
         $cvApi = new ClassevivaIntegration();
-        $topics = $cvApi->getTopics();
-        
-        if (isset($topics['error'])) {
+        $user   = $cvApi -> loadUser();
+        $resp = $cvApi -> getSubjects();
+
+        if (isset($resp['error'])) {
             http_response_code(401); // Unauthorized o altro errore
-            echo json_encode(["message" => $topics['error']]);
+            echo json_encode(["message" => $resp['error']]);
         } else {
             http_response_code(200);
-            echo json_encode($topics);
+            echo json_encode($resp);
         }
-        break;*/
+        break;
     
     default:
         http_response_code(405); // Not Found

@@ -4,6 +4,19 @@
   ~ sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
   -->
 
+<?php
+    $loggedIn = false;
+    $username = '';
+    $password = '';
+    if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username'])) ) {
+        if($_SESSION['classeviva_ident'] == $this -> usr -> uid || $_SESSION['classeviva_username'] == $this -> usr -> uid) {
+            $loggedIn = true;
+            $username = $_SESSION['classeviva_username'];
+            $password = $_SESSION['classeviva_password'];
+        }
+    }
+?>
+
 <!DOCTYPE html>
 <html lang="it">
     <head>
@@ -163,6 +176,24 @@
         </div>
 
         <script>
+        </script>
+
+        <script>
+            function atomDateParser(datestr) {
+                var yy   = datestr.substring(0,4);
+                var mo   = datestr.substring(5,7);
+                var dd   = datestr.substring(8,10);
+                var hh   = datestr.substring(11,13);
+                var mi   = datestr.substring(14,16);
+                var ss   = datestr.substring(17,19);
+                var tzs  = datestr.substring(19,20);
+                var tzhh = datestr.substring(20,22);
+                var tzmi = datestr.substring(23,25);
+                var myutc = Date.UTC(yy-0,mo-1,dd-0,hh-0,mi-0,ss-0);
+                var tzos = (tzs+(tzhh * 60 + tzmi * 1)) * 60000;
+                return new Date(myutc-tzos);
+            }
+
             document.addEventListener('DOMContentLoaded', () => {
                 const usernameInput = document.getElementById('username');
                 const passwordInput = document.getElementById('password');
@@ -179,6 +210,29 @@
                 const selectProfileBtn = document.getElementById('selectProfileBtn');
 
                 let currentChoices = []; // Per memorizzare le scelte multi-account
+                const backendBaseUrl = 'api.php?path='; // Adatta questo al tuo setup PHP
+
+                //if (<?php //=($loggedIn)?'true':'false'?>//) {
+                //    usernameInput.value = '<?php //=$username?>//';
+                //    passwordInput.value = '<?php //=$password?>//';
+                //}
+
+                //Se in sessione sono già loggato e la sessione di classeviva non è espirata
+                if (sessionStorage.getItem('lastLoginResponse') && sessionStorage.getItem('lastLoginResponse') !== 'undefined' ) {
+                    let llrnp = sessionStorage.getItem('lastLoginResponse');
+                    let llr = JSON.parse(JSON.parse(llrnp));
+                    // console.log(llr)
+                    let expires = atomDateParser(llr.expire);
+                    if (expires > new Date()) {
+                        console.log("retrive")
+                        //Allora richiedo e mostro i dati
+                        fetchClassevivaFastLogin(llr);
+                        fetchClassevivaVoti();
+                    } else {
+                        //Rimuovo i dati di sessione
+                        //TODO: Richiedi nuova sessione se requested è passato da almeno tot sec
+                    }
+                }
 
                 // URL base del backend PHP.
                 // ********************************************************************************
@@ -207,11 +261,10 @@
                 // ** Dovresti vedere una risposta JSON che indica "Endpoint API non specificato"**
                 // ** o un messaggio di errore JSON da PHP. Se vedi HTML, la configurazione non va. **
                 // ********************************************************************************
-                const backendBaseUrl = 'api.php?path='; // Adatta questo al tuo setup PHP
 
                 // Funzione per mostrare messaggi
                 function showMessage(message, type = 'success') {
-                    messageArea.textContent = message;
+                    messageArea.innerHTML += message + "<br/>";
                     messageArea.className = 'message-box'; // Reset class
                     if (type === 'error') {
                         messageArea.classList.add('error-message');
@@ -240,9 +293,44 @@
                     }
                 }
 
-                async function fetchClassevivaData(ident = null) {
-                    const username = usernameInput.value;
-                    const password = passwordInput.value;
+                async function fetchClassevivaFastLogin(loginResponseIn) {
+
+                    console.log("Retrive user from session: " + loginResponseIn.ident)
+
+                    if (!loginResponseIn) {
+                        showMessage('Sessione corrotta', 'error');
+                        return;
+                    }
+
+                    hideMessage();
+                    toggleLoading(true);
+                    dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
+                    profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo
+
+                    try {
+                        const loginResponse = await fetch(`${backendBaseUrl}fastLogin`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', },
+                            body: JSON.stringify( loginResponseIn ),
+                        });
+
+                        let responseText = await loginResponse.text();
+                        console.log(responseText);
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `, 'error');
+                    } finally {
+                        toggleLoading(false);
+                    }
+                }
+                async function fetchClassevivaLogin(ident = null) {
+                    let username = usernameInput.value;
+                    if (ident !== null) username = ident;
+
+                    let password = passwordInput.value;
+
+                    console.log("username: " + username + " password: " + password + " ident: " + ident + "")
 
                     if (!username || !password) {
                         showMessage('Per favore, inserisci username e password.', 'error');
@@ -284,9 +372,12 @@
                             console.warn("Risposta PHP non JSON:", result.rawResponse);
                             // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
                         }
-                        if (result.status === "602") {
+                        else if (result.status === "602") {
                             // Gestisce il caso in cui il PHP stampa debug output
                             showMessage(`Sei già loggato!`);
+                        } else {
+                            //Salvo info in sessione
+                            sessionStorage.setItem('lastLoginResponse', responseText);
                         }
 
 
@@ -377,16 +468,8 @@
                     }
                 }*/
 
-
                 async function fetchClassevivaVoti() {
-                    const username = usernameInput.value;
-                    const password = passwordInput.value;
-
-                    if (!username || !password) {
-                        showMessage('Per favore, inserisci username e password.', 'error');
-                        return;
-                    }
-
+                    console.log("Retrive grades")
                     hideMessage();
                     toggleLoading(true);
                     dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
@@ -396,16 +479,13 @@
                         const gradesResponse = await fetch(`${backendBaseUrl}grades`, {
                             method: 'GET',
                             headers: { 'Content-Type': 'application/json', },
-                            // body: JSON.stringify({ username, password, ident }),
                         });
 
-                        // Tentativo di leggere la risposta come JSON.
-                        // Se fallisce (perché c'è output extra), leggiamo come testo.
                         let result;
-                        let responseText = await gradesResponse.text(); // Legge sempre come testo prima
+                        let responseText = await gradesResponse.text();
                         console.log(responseText);
                         try {
-                            result = JSON.parse(responseText); // Tenta di parsare come JSON
+                            result = JSON.parse(responseText);
                         } catch (e) {
                             console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
                             result = {
@@ -415,7 +495,9 @@
                             };
                         }
 
-                        if (result.status === "non_json_output") {
+                        if (result === null) throw new Error('Non ci sono voti.');
+
+                        if ('status' in result && result.status === "non_json_output") {
                             // Gestisce il caso in cui il PHP stampa debug output
                             showMessage(`Errore: ${result.message}`, 'error');
                             messageArea.innerHTML += result.rawResponse;
@@ -426,34 +508,35 @@
 
                     } catch (error) {
                         console.error('Errore:', error);
-                        showMessage(`Errore: ${error.message}. `/*Assicurati che il backend PHP sia configurato correttamente e accessibile.`*/, 'error');
+                        showMessage(`Errore: ${error.message}. `, 'error');
                     } finally {
                         toggleLoading(false);
                     }
                 }
 
                 loginBtn.addEventListener('click', () => {
-                    fetchClassevivaData()
+                    fetchClassevivaLogin()
                     fetchClassevivaVoti()
                 });
 
                 selectProfileBtn.addEventListener('click', () => {
                     const selectedIdent = profileSelect.value;
                     if (selectedIdent) {
-                        fetchClassevivaData(selectedIdent);
+                        fetchClassevivaLogin(selectedIdent);
                     } else {
                         showMessage('Per favore, seleziona un profilo.', 'error');
                     }
                 });
 
                 function displayGrades(grades) {
-                    console.log(grades)
+                    //console.log(grades)
+                    console.log("Display grades")
                     dataSection.classList.remove('hidden');
                     gradesTableBody.innerHTML = ''; // Pulisce la tabella
                     if (grades !== null && grades.length > 0) {
                         noGradesMessage.classList.add('hidden');
                         grades.forEach(grade => {
-                            console.log(grade)
+                            //console.log(grade)
                             const row = gradesTableBody.insertRow();
                             row.insertCell().textContent = grade["subjectDesc"];
                             row.insertCell().textContent = grade["displayValue"];
@@ -464,7 +547,6 @@
                         noGradesMessage.classList.remove('hidden');
                     }
                 }
-
                 function displayTopics(topics) {
                     topicsTableBody.innerHTML = ''; // Pulisce la tabella
                     if (topics && topics.length > 0) {

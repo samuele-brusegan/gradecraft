@@ -1,0 +1,31 @@
+# Todo
+- [ ] Finire l'implementazione dell'API (2/18) *Considerando solo il primo livello*
+  - [X] Login
+  - [ ] Status ??
+  - [ ] Ticket ??
+  - [ ] Documents
+    - [ ] Check
+    - [ ] Read
+  - [ ] Assenze (0/3) 
+  - [ ] Agenda (0/2)
+  - [ ] Didattica
+    -  [ ] Elemento
+  - [ ] Bacheca (noticeboard)
+    - [ ] Leggi
+    - [ ] Allega
+  - [ ] Lezioni
+    - [ ] Oggi
+    - [ ] Giorno
+    - [ ] Da - A
+    - [ ] Da - A + Materia
+  - [ ] Calendar
+  - [ ] Libri (Esiste?!?!)
+  - [ ] Card
+  - [X] Voti
+  - [ ] Periodi
+  - [ ] Materie
+  - [ ] Note
+    - [ ] Leggi nota
+  - [ ] Overview
+  - [ ] Avatar
+- [ ] Iniziare la grafica

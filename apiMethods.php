@@ -7,7 +7,8 @@
 
 $methods = [
     "login"         => "login",
-    "get_grades" => "getGrades",
+    "get_grades"    => "getGrades",
+    "subjects"      => "subjects",
     //"logout"        => "logout",
     //"get_user"      => "getUser",
     //"get_users"     => "getUsers",

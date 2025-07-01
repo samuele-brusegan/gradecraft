@@ -5,40 +5,58 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 
-class User {
-    public $username;
-    public $password;
-    private $rawData;
+include_once 'collegamenti.php';
+$c = new Collegamenti();
 
+class User {
     //--------------
-    public $uid;
-    private $pwd;
-    public $ident = '';
-    public $token = '';
-    public $is_logged_in = false;
-    private $base_url = 'https://web.spaggiari.eu/rest/v1';
-    private $user_agent = 'CVVS/std/4.1.7 Android/10';
-    private $api_key = 'Tg1NWEwNGIgIC0K';
+    //private $base_url = 'https://web.spaggiari.eu/rest/v1';
+    public string $uid;
+    public string $pwd;
+    public string $ident = '';
+    public string $token = '';
+    public bool $is_logged_in = false;
+    private string $user_agent = 'CVVS/std/4.1.7 Android/10';
+    private string $api_key = 'Tg1NWEwNGIgIC0K';
     public $last_login_response = null;
+    public string $expDt;
+    public string $reqDt;
 
     /**
      * @param $username
      * @param $password
      */
     public function __construct($username=null, $password=null) {
-        $this->username = $username;
-        $this->password = $password;
         $this->uid = $username;
         $this->pwd = $password;
     }
 
-
-    public function setRawData($rawData) {
-        $this->rawData = $rawData;
+    /**
+     * @param $url
+     * @return mixed|null
+     */
+    private function sendRequest($url): mixed {
+        $headers = [
+            'User-Agent: ' . $this->user_agent,
+            'Content-Type: application/json',
+            'Z-Dev-ApiKey: ' . $this->api_key,
+            'Z-Auth-Token: ' . $this->token
+        ];
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $response = curl_exec($ch);
+        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpcode == 200) {
+            return json_decode($response, true);
+        }
+        return ["status" => $httpcode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
     }
 
     public function login(): string|false {
-        $url = $this->base_url . '/auth/login';
+        global $c;
+        $url = $c -> login;
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
@@ -68,6 +86,11 @@ class User {
                 preg_match('/\d+/', $data['ident'], $matches);
                 $this->ident = $matches[0];
                 $this->token = $data['token'];
+                //print_r($data);
+                $this->expDt = $data['expire'];
+                $this->reqDt = $data['release'];
+
+
                 $this->is_logged_in = true;
                 return json_encode($data);
             }
@@ -76,24 +99,22 @@ class User {
     }
 
     public function getVoti() {
-        if (!$this->is_logged_in) return null;
-        $url = $this->base_url . '/students/' . $this->ident . '/grades';
-        $headers = [
-            'User-Agent: ' . $this->user_agent,
-            'Content-Type: application/json',
-            'Z-Dev-ApiKey: ' . $this->api_key,
-            'Z-Auth-Token: ' . $this->token
-        ];
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        $response = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        if ($httpcode == 200) {
-            return json_decode($response, true);
-        }
-        return null;
+        if (!$this->is_logged_in) return "Errore: non sei loggato";
+        global $c;
+        $c->setIdent($this->ident);
+        $url = $c -> voti;
+
+        return $this->sendRequest($url);
     }
+    public function getSubjects() {
+        if (!$this->is_logged_in) return null;
+        global $c;
+        $c->setIdent($this->ident);
+        $url = $c -> materie;
+
+        return $this->sendRequest($url);
+    }
+
+
 }
 ?>
