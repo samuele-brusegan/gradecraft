@@ -43,6 +43,7 @@ class Collegamenti {
     public $leggi_nota;
     public $panoramica_da_a;
     public $avatar;
+    public $collegamenti;
     private $ident;
     private $date_from;
     private $date_to;
@@ -53,6 +54,41 @@ class Collegamenti {
         $this->setValues();
     }
     private function setValues(): void {
+        $this->collegamenti = [
+            'base'                   => "https://web.spaggiari.eu/rest",
+            'login'                  => $this->base . "/v1/auth/login",
+            'stato'                  => $this->base . "/v1/auth/status",
+            'biglietto'              => $this->base . "/v1/auth/ticket",
+            'documenti'              => $this->base . "/v1/students/" . $this->ident . "/documents",
+            'controllo_documento'    => $this->base . "/v1/students/" . $this->ident . "/documents/check/{{}}", //FIXME:AAAAA
+            'leggi_documento'        => $this->base . "/v1/students/" . $this->ident . "/documents/read/{{}}", //FIXME:AAAAA
+            'assenze'                => $this->base . "/v1/students/" . $this->ident . "/absences/details",
+            'assenze_da'             => $this->base . "/v1/students/" . $this->ident . "/absences/details/" . $this->date_from,
+            'assenze_da_a'           => $this->base . "/v1/students/" . $this->ident . "/absences/details/" . $this->date_from . "/" . $this->date_to,
+            'agenda_da_a'            => $this->base . "/v1/students/" . $this->ident . "/agenda/all/" . $this->date_from . "/" . $this->date_to,
+            'agenda_codice_da_a'     => $this->base . "/v1/students/" . $this->ident . "/agenda/" . $this->date_from . "/" . $this->date_to . "/" . $this->agenda_code,
+            'didattica'              => $this->base . "/v1/students/" . $this->ident . "/didactics",
+            'didattica_elemento'     => $this->base . "/v1/students/" . $this->ident . "/didactics/item/{{}}", //FIXME:AAAAA
+            'bacheca'                => $this->base . "/v1/students/" . $this->ident . "/noticeboard",
+            'bacheca_leggi'          => $this->base . "/v1/students/" . $this->ident . "/noticeboard/read/{{}}/{{}}/101", //FIXME:AAAAA
+            'bacheca_allega'         => $this->base . "/v1/students/" . $this->ident . "/noticeboard/attach/{{}}/{{}}/101", //FIXME:AAAAA
+            'bacheca_allega_esterno' => "https://web.spaggiari.eu/sif/app/default/bacheca_personale.php?action=file_download&com_id={{}}", //FIXME:AAAAA
+            'lezioni'                => $this->base . "/v1/students/" . $this->ident . "/lessons/today",
+            'lezioni_giorno'         => $this->base . "/v1/students/" . $this->ident . "/lessons/" . $this->date_from,
+            'lezioni_da_a'           => $this->base . "/v1/students/" . $this->ident . "/lessons/" . $this->date_from . "/" . $this->date_to,
+            'lezioni_da_a_materia'   => $this->base . "/v1/students/" . $this->ident . "/lessons/" . $this->date_from . "/" . $this->date_to . "/" . $this->materia,
+            'calendario'             => $this->base . "/v1/students/" . $this->ident . "/calendar/all",
+            'calendario_da_a'        => $this->base . "/v1/students/" . $this->ident . "/calendar/" . $this->date_from . "/" . $this->date_to,
+            'libri'                  => $this->base . "/v1/students/" . $this->ident . "/schoolbooks",
+            'carta'                  => $this->base . "/v1/students/" . $this->ident . "/card",
+            'voti'                   => $this->base . "/v1/students/" . $this->ident . "/grades",
+            'periodi'                => $this->base . "/v1/students/" . $this->ident . "/periods",
+            'materie'                => $this->base . "/v1/students/" . $this->ident . "/subjects",
+            'note'                   => $this->base . "/v1/students/" . $this->ident . "/notes/all",
+            'leggi_nota'             => $this->base . "/v1/students/" . $this->ident . "/notes/{{}}/read/{{}}", //FIXME:AAAAA
+            'panoramica_da_a'        => $this->base . "/v1/students/" . $this->ident . "/overview/all/" . $this->date_from . "/" . $this->date_to,
+            'avatar'                 => $this->base . "/v1/users/"    . $this->ident . "/avatar"
+        ];
         $this->base                    = "https://web.spaggiari.eu/rest";
         $this->login                   = $this->base . "/v1/auth/login";
         $this->stato                   = $this->base . "/v1/auth/status";
@@ -86,7 +122,7 @@ class Collegamenti {
         $this->note                    = $this->base . "/v1/students/".$this->ident."/notes/all";
         $this->leggi_nota              = $this->base . "/v1/students/".$this->ident."/notes/{{}}/read/{{}}";//FIXME:AAAAA
         $this->panoramica_da_a         = $this->base . "/v1/students/".$this->ident."/overview/all/".$this->date_from."/".$this->date_to;
-        $this->avatar                  = $this->base . "/v1/users/".$this->ident."/avatar";
+        $this->avatar                  = $this->base . "/v1/users/"   .$this->ident."/avatar";
     }
 
     public function setMateria($materia): void {

@@ -76,7 +76,7 @@ class ClassevivaIntegration {
         if ($this -> usr == null) return false;
 
         //Verifico di non essere già loggato
-        if (isset($_SESSION['classeviva_auth_token']) && date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date'] && false ) {
+        if (isset($_SESSION['classeviva_auth_token']) && date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date']) {
             if($_SESSION['classeviva_ident'] == $this -> usr -> uid || $_SESSION['classeviva_username'] == $this -> usr -> uid) {
                 $this -> usr -> token = $_SESSION['classeviva_auth_token'];
                 return array("status" => "602", "studentId" => $_SESSION['classeviva_ident'], "username" => $_SESSION['classeviva_username']);
@@ -91,7 +91,7 @@ class ClassevivaIntegration {
         $_SESSION['classeviva_ident']       = $this -> usr -> ident;
         $_SESSION['classeviva_username']    = $this -> usr -> uid;
         $_SESSION['classeviva_password']    = $this -> usr -> pwd;
-
+        //print_r($this -> usr);
         $_SESSION['classeviva_session_expiration_date'] = $this -> usr -> expDt;
         $_SESSION['classeviva_session_request_date']    = $this -> usr -> reqDt;
         return $resp;
@@ -107,6 +107,29 @@ class ClassevivaIntegration {
         if ($this -> usr == null) return false;
         //Restituisco
         return $this -> usr -> getSubjects();
+    }
+    public function getStatus() {
+        //Dev'esistere un utente
+        if ($this -> usr == null) return false;
+        //Restituisco
+        return $this -> usr -> getStatus();
+    }
+    public function getTicket() {
+        //Dev'esistere un utente
+        if ($this -> usr == null) return false;
+        //Restituisco
+        return $this -> usr -> getTicket();
+    }
+
+    public function genericQuery($request) {
+        //Dev'esistere un utente
+        if ($this -> usr == null) return 'noUsr';
+        //Restituisco
+        if (isset($c->collegamenti[$request])) {
+            return $this->usr->genericQuery($request);
+        } else {
+            return 'wrongRequest';
+        }
     }
 }
 
@@ -132,36 +155,81 @@ switch ($_SERVER['REQUEST_METHOD'] . ':' . $request_path) {
             exit();
         }
 
-        $cvApi = new ClassevivaIntegration();
-        $user = $cvApi -> createUser($username, $password);
-        $result = $cvApi -> login($ident); // Passa l'ident al metodo di login
+        $cvvApi = new ClassevivaIntegration();
+        $user = $cvvApi -> createUser($username, $password);
+        $result = $cvvApi -> login($ident); // Passa l'ident al metodo di login
         echo json_encode($result);
         break;
     case 'POST:fastLogin':
         $llr = json_decode(file_get_contents('php://input'), true);
 
-        $cvApi = new ClassevivaIntegration();
-        $user = $cvApi -> buildUser($llr);
+        $cvvApi = new ClassevivaIntegration();
+        $user = $cvvApi -> buildUser($llr);
         break;
     
     case 'GET:grades':
-        $cvApi = new ClassevivaIntegration();
-        $user   = $cvApi -> loadUser();
-        $grades = $cvApi -> getGrades();
+        $cvvApi = new ClassevivaIntegration();
+        $user   = $cvvApi -> loadUser();
+        $grades = $cvvApi -> getGrades();
         
         if (isset($grades['error'])) {
             http_response_code(401); // Unauthorized o altro errore
             echo json_encode(["message" => $grades['error']]);
         } else {
             http_response_code(200);
-            echo json_encode($grades);
+            echo json_encode($grades["grades"]);
         }
         break;
-
     case 'GET:subjects':
-        $cvApi = new ClassevivaIntegration();
-        $user   = $cvApi -> loadUser();
-        $resp = $cvApi -> getSubjects();
+        $cvvApi = new ClassevivaIntegration();
+        $user   = $cvvApi -> loadUser();
+        $resp = $cvvApi -> getSubjects();
+
+        if (isset($resp['error'])) {
+            http_response_code(401); // Unauthorized o altro errore
+            echo json_encode(["message" => $resp['error']]);
+        } else {
+            http_response_code(200);
+            echo json_encode($resp["subjects"]);
+        }
+        break;
+    //status = {release:string, ident:string, expire:string, remains:number}
+    case 'GET:status':
+        $cvvApi = new ClassevivaIntegration();
+        $user   = $cvvApi -> loadUser();
+        $resp = $cvvApi -> getStatus();
+
+        if (isset($resp['error'])) {
+            http_response_code(401); // Unauthorized o altro errore
+            echo json_encode(["message" => $resp['error']]);
+        } else {
+            http_response_code(200);
+            echo json_encode($resp['status']);
+
+        }
+        break;
+    case 'GET:ticket':
+        $cvvApi = new ClassevivaIntegration();
+        $user   = $cvvApi -> loadUser();
+        $resp = $cvvApi -> getTicket();
+
+        if (isset($resp['error'])) {
+            http_response_code(401); // Unauthorized o altro errore
+            echo json_encode(["message" => $resp['error']]);
+        } else {
+            http_response_code(200);
+            echo json_encode($resp);
+
+        }
+        break;
+    case 'POST:generic':
+        $request = json_decode(file_get_contents('php://input'), true);
+        $cvvApi = new ClassevivaIntegration();
+        $user   = $cvvApi -> loadUser();
+
+        $resp = $cvvApi -> genericQuery($request);
+
+        //TODO: Gestire >1 parametri
 
         if (isset($resp['error'])) {
             http_response_code(401); // Unauthorized o altro errore
@@ -171,6 +239,17 @@ switch ($_SERVER['REQUEST_METHOD'] . ':' . $request_path) {
             echo json_encode($resp);
         }
         break;
+        
+    case 'GET:rmSession':
+        $cvvApi = new ClassevivaIntegration();
+        //Salvo in sessione le informazioni restituitemi
+        unset($_SESSION['classeviva_auth_token']);
+        unset($_SESSION['classeviva_ident']);
+        unset($_SESSION['classeviva_username']);
+        unset($_SESSION['classeviva_password']);
+        unset($_SESSION['classeviva_session_expiration_date']);
+        unset($_SESSION['classeviva_session_request_date']);
+    break;
     
     default:
         http_response_code(405); // Not Found

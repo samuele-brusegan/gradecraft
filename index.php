@@ -23,6 +23,9 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>GradeCraft - Integrazione Classeviva</title>
+        <link  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js" integrity="sha384-RuyvpeZCxMJCqVUGFI0Do1mQrods/hhxYlcVfGPOfQtPJh0JCw12tUAZ/Mv10S7D" crossorigin="anonymous"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
         <style>
@@ -60,6 +63,17 @@
             .btn-primary:hover {
                 background-color: #4338ca;
             }
+
+            .btn-danger {
+                background-color: #dc2626;
+                color: white;
+                margin-left: 1rem;
+            }
+
+            .btn-danger:hover {
+                background-color: #b91c1c;
+            }
+
             .data-table {
                 width: 100%;
                 border-collapse: collapse;
@@ -107,12 +121,14 @@
         </style>
     </head>
     <body class="bg-gray-100 flex items-center justify-center min-h-screen">
-        <div class="container p-8">
+        
+        <div class="/*container*/ w-100 p-8">
             <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">GradeCraft - Integrazione Classeviva</h1>
 
             <div id="message-area" class="hidden"></div>
 
-            <div class="mb-6">
+            <!-- Login Area -->
+            <div class="mb-6" id="login-section">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">Accedi a Classeviva</h2>
                 <div class="mb-4">
                     <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Username Classeviva:</label>
@@ -126,142 +142,118 @@
                     Accedi e Carica Dati
                     <span id="loadingSpinner" class="loading-spinner"></span>
                 </button>
-<!--                <div id="profile-selection-area" class="hidden mt-4">-->
-<!--                    <h3 class="text-lg font-medium mb-2 text-gray-700">Seleziona un profilo:</h3>-->
-<!--                    <select id="profile-select" class="input-field mb-2"></select>-->
-<!--                    <button id="selectProfileBtn" class="btn btn-primary w-full">Seleziona Profilo</button>-->
-<!--                </div>-->
             </div>
+            <button id="logoutBtn" class="btn btn-danger hidden">Logout</button>
 
             <hr class="my-8 border-gray-200">
 
+            <!-- Dropdown per chiamare una funzione di fetch specifico -->
+            <div class="mb-4 hidden" id="select-method">
+                <label for="fetch-method" class="block text-gray-700 text-sm font-medium mb-2">Seleziona i dati da visualizzare:</label>
+                <div class="flex gap-2">
+                    <select id="fetch-method" class="input-field">
+                        <?php
+                        include_once 'api/apiMethods.php';
+                        global $methods;
+                        foreach ($methods as $method) {
+                            if ($method['name'] == 'login') continue;
+                            echo "<option value='{$method['name']}'>{$method['name']}</option>";
+                        }
+                        ?>
+                    </select>
+                    <button id="fetchBtn" class="btn btn-primary">
+                        Carica Dati
+                        <span class="loading-spinner"></span>
+                    </button>
+                </div>
+            </div>
             <div id="data-section" class="hidden">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">Dati Recuperati da Classeviva</h2>
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium mb-3 text-gray-700">Medie e Voti:</h3>
-                    <div id="grades-output">
+                    <h3 class="text-lg font-medium mb-3 text-gray-700">Dati</h3>
+                    <div id="cvv-data-output">
                         <table class="data-table">
                             <thead>
-                            <tr>
-                                <th>Materia</th>
-                                <th>Voto</th>
-                                <th>Data</th>
-                                <th>Descrizione</th>
-                            </tr>
+                            <tr id="cvv-data-table-head"></tr>
                             </thead>
-                            <tbody id="grades-table-body"></tbody>
+                            <tbody id="cvv-data-table-body"></tbody>
                         </table>
-                        <p id="no-grades-message" class="text-gray-600 mt-4 hidden">Nessun voto trovato.</p>
-                    </div>
-                </div>
-
-                <div>
-                    <h3 class="text-lg font-medium mb-3 text-gray-700">Cronologia Verifiche / Argomenti:</h3>
-                    <div id="topics-output">
-                        <table class="data-table">
-                            <thead>
-                            <tr>
-                                <th>Materia</th>
-                                <th>Argomento</th>
-                                <th>Data</th>
-                            </tr>
-                            </thead>
-                            <tbody id="topics-table-body"></tbody>
-                        </table>
-                        <p id="no-topics-message" class="text-gray-600 mt-4 hidden">Nessun argomento trovato.</p>
+                        <div id="cvv-data-buttons"></div>
+                        <p id="no-data-message" class="text-gray-600 mt-4 hidden">Nessun dato richiesto trovato.</p>
                     </div>
                 </div>
             </div>
         </div>
 
         <script>
-        </script>
-
-        <script>
-            function atomDateParser(datestr) {
-                var yy   = datestr.substring(0,4);
-                var mo   = datestr.substring(5,7);
-                var dd   = datestr.substring(8,10);
-                var hh   = datestr.substring(11,13);
-                var mi   = datestr.substring(14,16);
-                var ss   = datestr.substring(17,19);
-                var tzs  = datestr.substring(19,20);
-                var tzhh = datestr.substring(20,22);
-                var tzmi = datestr.substring(23,25);
-                var myutc = Date.UTC(yy-0,mo-1,dd-0,hh-0,mi-0,ss-0);
-                var tzos = (tzs+(tzhh * 60 + tzmi * 1)) * 60000;
-                return new Date(myutc-tzos);
+            function atomDateParser(atomDate) {
+                let yy   = atomDate.substring(0,4);
+                let mo   = atomDate.substring(5,7);
+                let dd   = atomDate.substring(8,10);
+                let hh   = atomDate.substring(11,13);
+                let mi   = atomDate.substring(14,16);
+                let ss   = atomDate.substring(17,19);
+                //Time zone
+                let tzs  = atomDate.substring(19,20);
+                let tzh  = atomDate.substring(20,22);
+                let tzm  = atomDate.substring(23,25);
+                let myUTC = Date.UTC(yy-0,mo-1,dd-0,hh-0,mi-0,ss-0);
+                let tzOff = (tzs+(tzh * 60 + tzm * 1)) * 60000;
+                return new Date(myUTC-tzOff);
             }
 
             document.addEventListener('DOMContentLoaded', () => {
-                const usernameInput = document.getElementById('username');
-                const passwordInput = document.getElementById('password');
-                const loginBtn = document.getElementById('loginBtn');
-                const dataSection = document.getElementById('data-section');
-                const gradesTableBody = document.getElementById('grades-table-body');
-                const topicsTableBody = document.getElementById('topics-table-body');
-                const noGradesMessage = document.getElementById('no-grades-message');
-                const noTopicsMessage = document.getElementById('no-topics-message');
-                const messageArea = document.getElementById('message-area');
-                const loadingSpinner = document.getElementById('loadingSpinner');
-                const profileSelectionArea = document.getElementById('profile-selection-area');
-                const profileSelect = document.getElementById('profile-select');
-                const selectProfileBtn = document.getElementById('selectProfileBtn');
+                const usernameInput     = document.getElementById('username');
+                const passwordInput     = document.getElementById('password');
+                const loginBtn          = document.getElementById('loginBtn');
+                const dataSection       = document.getElementById('data-section');
+                const gradesTableBody   = document.getElementById('grades-table-body');
+                const topicsTableBody   = document.getElementById('topics-table-body');
+                const noGradesMessage   = document.getElementById('no-grades-message');
+                const noDataMessage     = document.getElementById('no-data-message');
+                const messageArea       = document.getElementById('message-area');
+                const loadingSpinner    = document.getElementById('loadingSpinner');
 
-                //let currentChoices = []; // Per memorizzare le scelte multi-account
-                const backendBaseUrl = 'api.php?path='; // Adatta questo al tuo setup PHP
+                const backendBaseUrl = 'api/api.php?path='; // Adatta questo al tuo setup PHP
 
-                //if (<?php //=($loggedIn)?'true':'false'?>//) {
-                //    usernameInput.value = '<?php //=$username?>//';
-                //    passwordInput.value = '<?php //=$password?>//';
-                //}
+                //Se in sessione sono già registrato e la sessione di classeviva non è espirata
+                tryToRetriveUsr();
 
-                //Se in sessione sono già loggato e la sessione di classeviva non è espirata
-                if (sessionStorage.getItem('lastLoginResponse') && sessionStorage.getItem('lastLoginResponse') !== 'undefined' ) {
-                    let llrnp = sessionStorage.getItem('lastLoginResponse');
-                    let llr = JSON.parse(JSON.parse(llrnp));
-                    // console.log(llr)
-                    let expires = atomDateParser(llr.expire);
-                    if (expires > new Date()) {
-                        console.log("retrive")
-                        //Allora richiedo e mostro i dati
-                        fetchClassevivaFastLogin(llr);
-                        fetchClassevivaVoti();
-                    } else {
-                        //Rimuovo i dati di sessione
-                        //TODO: Richiedi nuova sessione se requested è passato da almeno tot sec
+                function tryToRetriveUsr() {
+                    if (sessionStorage.getItem('lastLoginResponse') && sessionStorage.getItem('lastLoginResponse') !== 'undefined' ) {
+                        let llrNotParsed = sessionStorage.getItem('lastLoginResponse');
+                        let llr = JSON.parse(JSON.parse(llrNotParsed));
+                        // console.log(llr)
+                        let expires = atomDateParser(llr['expire']);
+                        let release = atomDateParser(llr['release']);
+                        
+                        if (expires > new Date()) {
+                            console.log("retrive")
+                            //Allora richiedo e mostro i dati
+                            fetchClassevivaFastLogin(llr);
+                            document.getElementById('login-section').classList.add('hidden');
+                            //fetchClassevivaAll();
+                        } else {
+                            //Check if more than 60 seconds passed since last request
+                            let timeDiff = (new Date() - release) / 1000;
+                            if (timeDiff > 60) {
+                                //Request new session
+                                const encryptedPassword = sessionStorage.getItem('classeviva_password');
+                                const passwordDecrypted = atob(encryptedPassword);
+                                console.log("Password: " + passwordDecrypted)
+                                fetchClassevivaLogin(llr.ident, llr.ident, passwordDecrypted);
+                            } else {
+                                console.log("Session expired but need to wait before requesting new one");
+                            }
+                        }
+                        document.getElementById('login-section').classList.add('hidden');
+                        document.getElementById('select-method').classList.remove('hidden');
+                        document.getElementById('logoutBtn').classList.remove('hidden');
                     }
                 }
 
-                // URL base del backend PHP.
-                // ********************************************************************************
-                // ** IMPORTANTISSIMO: Questo URL deve corrispondere esattamente a come hai configurato **
-                // ** il tuo server web per reindirizzare le richieste API al tuo script PHP.      **
-                // ** **
-                // ** ESEMPI DI CONFIGURAZIONE E backendBaseUrl:                                   **
-                // ** **
-                // ** 1. Se il tuo file PHP si chiama api.php e si trova nella root del dominio, e **
-                // ** hai configurato .htaccess (per Apache) come segue:                       **
-                // ** (Contenuto di .htaccess nella root):                                      **
-                // ** RewriteEngine On                                                          **
-                // ** RewriteCond %{REQUEST_FILENAME} !-f                                       **
-                // ** RewriteCond %{REQUEST_FILENAME} !-d                                       **
-                // ** RewriteRule ^api/(.*)$ api.php?path=$1 [L,QSA]                            **
-                // ** Allora:                                                                   **
-                // ** const backendBaseUrl = 'http://localhost/api.php?path=';                   **
-                // ** Oppure, se la tua installazione locale è ad esempio 'http://localhost/gradecraft/': **
-                // ** const backendBaseUrl = 'http://localhost/gradecraft/api.php?path=';        **
-                // ** **
-                // ** 2. Se non usi la riscrittura URL e chiami direttamente api.php, ma vuoi   **
-                // ** specificare il percorso come parametro:                                   **
-                // ** const backendBaseUrl = 'http://localhost/api.php?path=';                   **
-                // ** **
-                // ** TEST: Prova a navigare a 'http://localhost/api.php?path=login' nel browser. **
-                // ** Dovresti vedere una risposta JSON che indica "Endpoint API non specificato"**
-                // ** o un messaggio di errore JSON da PHP. Se vedi HTML, la configurazione non va. **
-                // ********************************************************************************
-
+                //=== UI Helpers ===
                 // Funzione per mostrare messaggi
                 function showMessage(message, type = 'success') {
                     messageArea.innerHTML += message + "<br/>";
@@ -273,26 +265,23 @@
                     }
                     messageArea.classList.remove('hidden');
                 }
-
                 // Funzione per nascondere messaggi
                 function hideMessage() {
                     messageArea.classList.add('hidden');
                     messageArea.textContent = '';
                 }
-
                 // Funzione per mostrare o nascondere lo spinner di caricamento
                 function toggleLoading(isLoading) {
                     if (isLoading) {
                         loadingSpinner.style.display = 'inline-block';
                         loginBtn.disabled = true;
-                        selectProfileBtn.disabled = true; // Disabilita anche il bottone di selezione profilo
                     } else {
                         loadingSpinner.style.display = 'none';
                         loginBtn.disabled = false;
-                        selectProfileBtn.disabled = false;
                     }
                 }
 
+                //=== Login ===
                 async function fetchClassevivaFastLogin(loginResponseIn) {
 
                     console.log("Retrive user from session: " + loginResponseIn.ident)
@@ -305,7 +294,6 @@
                     hideMessage();
                     toggleLoading(true);
                     dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
-                    profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo
 
                     try {
                         const loginResponse = await fetch(`${backendBaseUrl}fastLogin`, {
@@ -324,11 +312,11 @@
                         toggleLoading(false);
                     }
                 }
-                async function fetchClassevivaLogin(ident = null) {
-                    let username = usernameInput.value;
+                async function fetchClassevivaLogin(ident = null, username = null, password = null) {
+                    if(username === null) username = usernameInput.value;
                     if (ident !== null) username = ident;
+                    if(password === null) password = passwordInput.value;
 
-                    let password = passwordInput.value;
 
                     console.log("username: " + username + " password: " + password + " ident: " + ident + "")
 
@@ -339,8 +327,7 @@
 
                     hideMessage();
                     toggleLoading(true);
-                    dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
-                    profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo
+                    dataSection.classList.add('hidden');
 
                     try {
                         const loginResponse = await fetch(`${backendBaseUrl}login`, {
@@ -349,13 +336,11 @@
                             body: JSON.stringify({ username, password, ident }),
                         });
 
-                        // Tentativo di leggere la risposta come JSON.
-                        // Se fallisce (perché c'è output extra), leggiamo come testo.
                         let result;
-                        let responseText = await loginResponse.text(); // Legge sempre come testo prima
+                        let responseText = await loginResponse.text();
                         console.log(responseText);
                         try {
-                            result = JSON.parse(responseText); // Tenta di parsare come JSON
+                            result = JSON.parse(responseText);
                         } catch (e) {
                             console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
                             result = {
@@ -366,99 +351,22 @@
                         }
 
                         if (result.status === "non_json_output") {
-                            // Gestisce il caso in cui il PHP stampa debug output
                             showMessage(`Errore: ${result.message}`, 'error');
                             messageArea.innerHTML += result.rawResponse;
                             console.warn("Risposta PHP non JSON:", result.rawResponse);
-                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
                         }
                         else if (result.status === "602") {
-                            // Gestisce il caso in cui il PHP stampa debug output
-                            showMessage(`Sei già loggato!`);
-                        } else {
+                            showMessage(`Sei già registrato!`);
+                        }
+                        else {
                             //Salvo info in sessione
                             sessionStorage.setItem('lastLoginResponse', responseText);
+
+                            // Encrypt password using Base64 encoding before storing
+                            const encryptedPassword = btoa(password);
+                            sessionStorage.setItem('classeviva_password', encryptedPassword);
+
                         }
-
-
-                        /* else if (!loginResponse.ok) {
-                            throw new Error(result.message || 'Errore sconosciuto durante il login.');
-                        } else if (result.status === "multi_account") {
-                            currentChoices = result.choices;
-                            profileSelect.innerHTML = ''; // Pulisce le opzioni
-                            currentChoices.forEach(choice => {
-                                const option = document.createElement('option');
-                                option.value = choice.ident;
-                                option.textContent = `${choice.name} (${choice.school})`;
-                                profileSelect.appendChild(option);
-                            });
-                            profileSelectionArea.classList.remove('hidden');
-                            showMessage('Multi-account rilevato. Seleziona un profilo.', 'info');
-                        } else if (result.status === "success") {
-                            showMessage('Accesso a Classeviva riuscito! Caricamento dati in corso...');
-                            profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo se il login è diretto
-
-                            // Passo 2: Recupero voti
-                            const gradesResponse = await fetch(`${backendBaseUrl}grades`);
-                            const grades = await gradesResponse.json();
-                            displayGrades(grades);
-
-                            // Passo 3: Recupero argomenti/cronologia verifiche
-                            const topicsResponse = await fetch(`${backendBaseUrl}topics`);
-                            const topics = await topicsResponse.json();
-                            displayTopics(topics);
-
-                            dataSection.classList.remove('hidden'); // Mostra la sezione dati
-                            showMessage('Dati di Classeviva caricati con successo!');
-                        } else {
-                            // Questo caso dovrebbe essere catturato da !loginResponse.ok ma per sicurezza
-                            throw new Error(result.message || 'Errore MOLTO imprevisto nel login.');
-                        }*/
-
-                    } catch (error) {
-                        console.error('Errore:', error);
-                        showMessage(`Errore: ${error.message}. `/*Assicurati che il backend PHP sia configurato correttamente e accessibile.`*/, 'error');
-                    } finally {
-                        toggleLoading(false);
-                    }
-                }
-                /*async function fetchClasseviva(requestedMethod,) {
-                    hideMessage();
-                    toggleLoading(true);
-
-                    try {
-                        if ()
-
-
-                        const gradesResponse = await fetch(`${backendBaseUrl}${path}`, {
-                            method: `${method}`,
-                            headers: { 'Content-Type': 'application/json', },
-                        });
-
-                        // Tentativo di leggere la risposta come JSON.
-                        // Se fallisce (perché c'è output extra), leggiamo come testo.
-                        let result;
-                        let responseText = await gradesResponse.text(); // Legge sempre come testo prima
-                        console.log(responseText);
-                        try {
-                            result = JSON.parse(responseText); // Tenta di parsare come JSON
-                        } catch (e) {
-                            console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
-                            result = {
-                                status: "non_json_output",
-                                message: "Il backend ha inviato un output non JSON. Controlla la console per il debug del PHP.",
-                                rawResponse: responseText,
-                            };
-                        }
-
-                        if (result.status === "non_json_output") {
-                            // Gestisce il caso in cui il PHP stampa debug output
-                            showMessage(`Errore: ${result.message}`, 'error');
-                            messageArea.innerHTML += result.rawResponse;
-                            console.warn("Risposta PHP non JSON:", result.rawResponse);
-                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
-                        }
-                        displayGrades(result["grades"])
 
                     } catch (error) {
                         console.error('Errore:', error);
@@ -466,14 +374,95 @@
                     } finally {
                         toggleLoading(false);
                     }
-                }*/
+                }
 
+                //=== Dati ===
+                async function fetchClassevivaAll() {
+                    hideMessage();
+                    toggleLoading(true);
+
+                    try {
+
+                        await fetchClasseviva('get_grades');
+                        await fetchClasseviva('subjects');
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `, 'error');
+                    } finally {
+                        toggleLoading(false);
+                    }
+                }
+                async function fetchClasseviva(requestedMethod) {
+                    hideMessage();
+                    toggleLoading(true);
+
+                    try {
+                        //Creo un grosso array per la gestione dei metodi in PHP
+                        const methods = <?php
+                            include_once 'api/apiMethods.php';
+                            global $methods;
+                            echo json_encode($methods);
+                        ?>;
+                        let method = null;
+                        let path = null;
+                        let httpMethod = null;
+                        let url = null;
+
+                        if (methods.hasOwnProperty(requestedMethod)) {
+                            method = methods[requestedMethod];
+                            path = method['path'];
+                            url = method['url'];
+                            httpMethod = method['method'];
+                            console.log(path)
+                        } else {
+                            throw new Error(`Metodo non supportato: ${requestedMethod}, ${methods}`);
+                        }
+
+
+                        const apiResponse = await fetch(`${backendBaseUrl}${path}`, {
+                            method: `${httpMethod}`,
+                            headers: { 'Content-Type': 'application/json', },
+                            body: JSON.stringify( url )
+                        });
+
+                        // Tentativo di leggere la risposta come JSON.
+                        let result;
+                        let responseText = await apiResponse.text();
+                        //console.log(responseText);
+                        try {
+                            result = JSON.parse(responseText);
+                            console.log(result)
+                        } catch (e) {
+                            console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
+                            result = {
+                                status: "non_json_output",
+                                message: "Il backend ha inviato un output non JSON. Controlla la console per il debug del PHP.",
+                                rawResponse: responseText,
+                            };
+                        }
+
+                        if (result.status === "non_json_output") {
+                            // Gestisce il caso in cui il PHP stampa debug output
+                            showMessage(`Errore: ${result.message}`, 'error');
+                            messageArea.innerHTML += result.rawResponse;
+                            console.warn("Risposta PHP non JSON:", result.rawResponse);
+                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
+                        }
+                        return result;
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `, 'error');
+                    } finally {
+                        toggleLoading(false);
+                    }
+                }
                 async function fetchClassevivaVoti() {
                     console.log("Retrive grades")
                     hideMessage();
                     toggleLoading(true);
                     dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
-                    profileSelectionArea.classList.add('hidden'); // Nasconde la selezione profilo
 
                     try {
                         const gradesResponse = await fetch(`${backendBaseUrl}grades`, {
@@ -503,7 +492,7 @@
                             console.warn("Risposta PHP non JSON:", result.rawResponse);
                             // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
                         }
-                        displayGrades(result["grades"])
+                        return result;
 
                     } catch (error) {
                         console.error('Errore:', error);
@@ -515,30 +504,53 @@
 
                 loginBtn.addEventListener('click', () => {
                     fetchClassevivaLogin()
-                    fetchClassevivaVoti()
+                    document.getElementById('login-section').classList.add('hidden');
+                    document.getElementById('select-method').classList.remove('hidden');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
                 });
 
-                selectProfileBtn.addEventListener('click', () => {
-                    const selectedIdent = profileSelect.value;
-                    if (selectedIdent) {
-                        fetchClassevivaLogin(selectedIdent);
-                    } else {
-                        showMessage('Per favore, seleziona un profilo.', 'error');
+                document.getElementById('logoutBtn').addEventListener('click', async () => {
+                    sessionStorage.clear();
+                    document.getElementById('login-section').classList.remove('hidden');
+                    document.getElementById('select-method').classList.add('hidden');
+                    document.getElementById('logoutBtn').classList.add('hidden');
+                    document.getElementById('data-section').classList.add('hidden');
+
+                    //Delete php sessions
+                    try {
+                        const loginResponse = await fetch(`${backendBaseUrl}rmSession`, {
+                            method: 'GET',
+                            headers: {'Content-Type': 'application/json',},
+                        });
+
+                        let responseText = await loginResponse.text();
+                        console.log(responseText);
+
+
+                    } catch (error) {
+                        console.error('Errore:', error);
+                        showMessage(`Errore: ${error.message}. `, 'error');
                     }
                 });
+                document.getElementById('fetchBtn').addEventListener('click', async () => {
+                    const selectedMethod = document.getElementById('fetch-method').value;
+                    let resp = await fetchClasseviva(selectedMethod);
+                    if (resp.status === "non_json_output") { return; }
+                    displayData(resp);
+                });
+
 
                 function displayGrades(grades, page=0) {
-                    //console.log(grades)
                     console.log("Display grades")
                     dataSection.classList.remove('hidden');
-                    gradesTableBody.innerHTML = ''; // Pulisce la tabella
+                    gradesTableBody.innerHTML = '';
                     if (grades !== null && grades.length > 0) {
                         noGradesMessage.classList.add('hidden');
                         let gradeNum = 0;
                         let PAGE_LIMIT = 10;
                         grades.forEach(grade => {
 
-                            if (gradeNum >= (page * PAGE_LIMIT) && gradeNum < ((page + 1) * PAGE_LIMIT)) {
+                            if (PAGE_LIMIT !== -1 && gradeNum >= (page * PAGE_LIMIT) && gradeNum < ((page + 1) * PAGE_LIMIT)) {
                                 const row = gradesTableBody.insertRow();
                                 row.insertCell().textContent = grade["subjectDesc"];
                                 row.insertCell().textContent = grade["displayValue"];
@@ -548,42 +560,139 @@
                             gradeNum++;
                         });
 
-                        let pageBnts = document.createElement('div');
-                        pageBnts.display = 'flex';
-                        pageBnts.justifyContent = 'justify-between';
+                        //Bottoni per il multi-paging
+                        if ( PAGE_LIMIT !== -1 && grades.length > PAGE_LIMIT) {
+                            let pageBnts = document.createElement('div');
+                            pageBnts.display = 'flex';
+                            pageBnts.justifyContent = 'justify-between';
 
-                        let nextPageBtn = document.createElement('button');
-                        nextPageBtn.textContent = 'Next Page';
-                        nextPageBtn.addEventListener('click', () => displayGrades(grades, page + 1))
-                        nextPageBtn.classList.add('btn');
-                        nextPageBtn.classList.add('btn-primary');
-                        pageBnts.appendChild(nextPageBtn);
+                            //Se c'è una pagina precedente
+                            if ( page > 0 ) {
+                                let prevPageBtn = document.createElement('button');
+                                prevPageBtn.textContent = 'Prev Page';
+                                prevPageBtn.classList.add('btn');
+                                prevPageBtn.classList.add('btn-primary');
+                                prevPageBtn.addEventListener('click', () => displayGrades(grades, page - 1))
+                                pageBnts.appendChild(prevPageBtn);
+                            }
+                            //Se c'è una pagina successiva
+                            if ( (page + 1) * PAGE_LIMIT < grades.length ) {
+                                let nextPageBtn = document.createElement('button');
+                                nextPageBtn.textContent = 'Next Page';
+                                nextPageBtn.addEventListener('click', () => displayGrades(grades, page + 1))
+                                nextPageBtn.classList.add('btn');
+                                nextPageBtn.classList.add('btn-primary');
+                                pageBnts.appendChild(nextPageBtn);
+                            }
 
-                        let prevPageBtn = document.createElement('button');
-                        prevPageBtn.textContent = 'Prev Page';
-                        prevPageBtn.classList.add('btn');
-                        prevPageBtn.classList.add('btn-primary');
-                        prevPageBtn.addEventListener('click', () => displayGrades(grades, page - 1))
-                        pageBnts.appendChild(prevPageBtn);
-
-                        gradesTableBody.appendChild(pageBnts);
+                            gradesTableBody.appendChild(pageBnts);
+                        }
 
                     } else {
                         noGradesMessage.classList.remove('hidden');
                     }
                 }
-                function displayTopics(topics) {
-                    topicsTableBody.innerHTML = ''; // Pulisce la tabella
-                    if (topics && topics.length > 0) {
-                        noTopicsMessage.classList.add('hidden');
-                        topics.forEach(topic => {
-                            const row = topicsTableBody.insertRow();
-                            row.insertCell().textContent = topic.materia;
-                            row.insertCell().textContent = topic.argomento;
-                            row.insertCell().textContent = topic.data;
+                function displayData(data, page=0) {
+                    let dataTableBody = document.getElementById('cvv-data-table-body');
+                    console.log("Display generica data")
+                    console.log(data)
+                    console.log(data.length)
+                    dataSection.classList.remove('hidden');
+                    dataTableBody.innerHTML = ''; // Pulisce la tabella
+
+                    if (data !== null && data.length > 0) {
+                        noDataMessage.classList.add('hidden');
+                        let i = 0;
+                        let PAGE_LIMIT = 10;
+                        let head = document.getElementById("cvv-data-table-head")
+                        head.innerHTML = '';
+                        Object.keys(data[0]).map(prop => {
+                            let th = document.createElement('th');
+                            th.textContent = prop;
+                            head.appendChild(th);
+                        })
+
+                        data.forEach(el => {
+
+                            if (PAGE_LIMIT !== -1 && i >= (page * PAGE_LIMIT) && i < ((page + 1) * PAGE_LIMIT)) {
+                                const row = dataTableBody.insertRow();
+                                console.log(el)
+                                Object.keys(el).map(prop => {
+                                    let out = '';
+                                    try {
+                                        el[prop].forEach((obj) => {
+                                            out += JSON.stringify(obj);
+                                        });
+                                    } catch (e) {
+                                        out = el[prop];
+                                    }
+                                    row.insertCell().textContent = out;
+                                })
+
+                            }
+                            i++;
                         });
-                    } else {
-                        noTopicsMessage.classList.remove('hidden');
+
+                        //Bottoni per il multi-paging
+                        if ( PAGE_LIMIT !== -1 && data.length > PAGE_LIMIT) {
+                            document.getElementById('cvv-data-buttons').innerHTML = '';
+                            let pageBnts = document.createElement('div');
+                            pageBnts.display = 'flex';
+                            pageBnts.justifyContent = 'justify-between';
+
+                            //Se c'è una pagina precedente
+                            if ( page > 0 ) {
+                                let prevPageBtn = document.createElement('button');
+                                prevPageBtn.textContent = 'Prev Page';
+                                prevPageBtn.classList.add('btn');
+                                prevPageBtn.classList.add('btn-primary');
+                                prevPageBtn.addEventListener('click', () => displayData(data, page - 1))
+                                pageBnts.appendChild(prevPageBtn);
+                            }
+                            //Se c'è una pagina successiva
+                            if ( (page + 1) * PAGE_LIMIT < data.length ) {
+                                let nextPageBtn = document.createElement('button');
+                                nextPageBtn.textContent = 'Next Page';
+                                nextPageBtn.addEventListener('click', () => displayData(data, page + 1))
+                                nextPageBtn.classList.add('btn');
+                                nextPageBtn.classList.add('btn-primary');
+                                pageBnts.appendChild(nextPageBtn);
+                            }
+
+                            document.getElementById('cvv-data-buttons').appendChild(pageBnts);
+                        }
+
+                    }
+                    else if (!data.hasOwnProperty('length')) {
+
+                        //TODO: Fix dup. code
+
+                        let el = data;
+                        let head = document.getElementById("cvv-data-table-head")
+                        head.innerHTML = '';
+                        Object.keys(el).map(prop => {
+                            let th = document.createElement('th');
+                            th.textContent = prop;
+                            head.appendChild(th);
+                        })
+
+                        const row = dataTableBody.insertRow();
+                        console.log(el)
+                        Object.keys(el).map(prop => {
+                            let out = '';
+                            try {
+                                el[prop].forEach((obj) => {
+                                    out += JSON.stringify(obj);
+                                });
+                            } catch (e) {
+                                out = el[prop];
+                            }
+                            row.insertCell().textContent = out;
+                        })
+
+                    }
+                    else {
+                        noDataMessage.classList.remove('hidden');
                     }
                 }
             });

@@ -22,20 +22,27 @@ class User {
     public string $expDt;
     public string $reqDt;
 
+
     /**
-     * @param $username
-     * @param $password
+     * Initializes a new instance of the class and assigns the provided username and password.
+     *
+     * @param string|null $username The username for authentication. Defaults to null if not provided.
+     * @param string|null $password The password for authentication. Defaults to null if not provided.
+     * @return void
      */
-    public function __construct($username=null, $password=null) {
+    public function __construct(string $username=null, string $password=null) {
         $this->uid = $username;
         $this->pwd = $password;
     }
 
+
     /**
-     * @param $url
-     * @return mixed|null
+     * Sends an HTTP request to the specified URL using cURL, with predefined headers for authentication and content type.
+     *
+     * @param string $url The URL to which the request is sent.
+     * @return mixed Returns the decoded JSON response if the HTTP status code is 200. Otherwise, returns an associative array containing the status code, raw response message, URL, headers, and response body.
      */
-    private function sendRequest($url): mixed {
+    private function sendRequest(string $url): mixed {
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
@@ -111,6 +118,28 @@ class User {
         global $c;
         $c->setIdent($this->ident);
         $url = $c -> materie;
+
+        return $this->sendRequest($url);
+    }
+    public function getStatus() {
+        if (!$this->is_logged_in) return "Errore: non sei loggato";
+        global $c;
+        $url = $c -> stato;
+
+        return $this->sendRequest($url);
+    }
+    public function getTicket() {
+        if (!$this->is_logged_in) return "Errore: non sei loggato";
+        global $c;
+        $url = $c -> biglietto;
+
+        return $this->sendRequest($url);
+    }
+    public function genericQuery($request) {
+        if (!$this->is_logged_in) return "Errore: non sei loggato";
+        global $c;
+        $c->setIdent($this->ident);
+        $url = $c -> collegamenti[$request];
 
         return $this->sendRequest($url);
     }

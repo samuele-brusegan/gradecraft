@@ -1,6 +1,6 @@
-RewriteEngine On
-RewriteBase /js/gradecraft/
-
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^api/(.*)$ php/api.php?path=$1 [L,QSA]
+#RewriteEngine On
+#RewriteBase /js/gradecraft/
+#
+#RewriteCond %{REQUEST_FILENAME} !-f
+#RewriteCond %{REQUEST_FILENAME} !-d
+#RewriteRule ^api/(.*)$ php/api.php?path=$1 [L,QSA]
