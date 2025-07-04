@@ -1,38 +1,61 @@
-`base____________________= "https://web.spaggiari.eu/rest";`  
-`login___________________= base + "/v1/auth/login";`  
-`stato___________________= base + "/v1/auth/status";`  
-`biglietto_______________= base + "/v1/auth/ticket";`  
-`documenti_______________= base + "/v1/students/STUDENT_IDENT_HERE/documents";`  
-`controllo_documento_____= base + "/v1/students/STUDENT_IDENT_HERE/documents/check/ELEMENT_ID";`  
-`leggi_documento_________= base + "/v1/students/STUDENT_IDENT_HERE/documents/read/ELEMENT_ID";`  
-`assenze_________________= base + "/v1/students/STUDENT_IDENT_HERE/absences/details";`  
-`assenze_da______________= base + "/v1/students/STUDENT_IDENT_HERE/absences/details/DATE_FROM";`  
-`assenze_da_a____________= base + "/v1/students/STUDENT_IDENT_HERE/absences/details/DATE_FROM/DATE_TO";`  
-`agenda_da_a_____________= base + "/v1/students/STUDENT_IDENT_HERE/agenda/all/DATE_FROM/DATE_TO";`  
-`agenda_codice_da_a______= base + "/v1/students/STUDENT_IDENT_HERE/agenda/DATE_FROM/DATE_TO/MAYBE_A_CODE";`  
-`didattica_______________= base + "/v1/students/STUDENT_IDENT_HERE/didactics";`  
-`didattica_elemento______= base + "/v1/students/STUDENT_IDENT_HERE/didactics/item/ELEMENT_ID";`  
-`bacheca_________________= base + "/v1/students/STUDENT_IDENT_HERE/noticeboard";`  
-`bacheca_leggi___________= base + "/v1/students/STUDENT_IDENT_HERE/noticeboard/read/{{}}/{{}}/101";`  
-`bacheca_allega__________= base + "/v1/students/STUDENT_IDENT_HERE/noticeboard/attach/{{}}/{{}}/101";`
+## Endpoints
+_API Url: <code>https://web.spaggiari.eu/rest/</code>_
 
-`bacheca_allega_esterno__= "https://web.spaggiari.eu/sif/app/default/bacheca_personale.php?action=file_download&com_id={{}}";`
+## Request Header
+- User-Agent: <code>CVVS/std/4.1.7 Android/10</code>
+- Z-Dev-Apikey: <code>Tg1NWEwNGIgIC0K</code>
+- ContentsDiary-Type: <code>application/json</code>
 
-`lezioni_________________= base + "/v1/students/STUDENT_IDENT_HERE/lessons/today";`  
-`lezioni_giorno__________= base + "/v1/students/STUDENT_IDENT_HERE/lessons/DATE";`  
-`lezioni_da_a____________= base + "/v1/students/STUDENT_IDENT_HERE/lessons/DATE_FROM/DATE_TO";`  
-`lezioni_da_a_materia____= base + "/v1/students/STUDENT_IDENT_HERE/lessons/DATE_FROM/DATE_TO/SUBJECT";`  
-`calendario______________= base + "/v1/students/STUDENT_IDENT_HERE/calendar/all";`  
-`calendario_da_a_________= base + "/v1/students/STUDENT_IDENT_HERE/calendar/DATE_FROM/DATE_TO";`  
-`libri___________________= base + "/v1/students/STUDENT_IDENT_HERE/schoolbooks";`  
-`carta___________________= base + "/v1/students/STUDENT_IDENT_HERE/card";`  
-`voti____________________= base + "/v1/students/STUDENT_IDENT_HERE/grades";`  
-`periodi_________________= base + "/v1/students/STUDENT_IDENT_HERE/periods";`  
-`materie_________________= base + "/v1/students/STUDENT_IDENT_HERE/subjects";`  
-`note____________________= base + "/v1/students/STUDENT_IDENT_HERE/notes/all";`  
-`leggi_nota______________= base + "/v1/students/STUDENT_IDENT_HERE/notes/{{}}/read/{{}}";`  
-`panoramica_da_a_________= base + "/v1/students/STUDENT_IDENT_HERE/overview/all/DATE_FROM/DATE_TO";`  
-`avatar__________________= base + "/v1/users/STUDENT_IDENT_HERE/avatar";`
+_Warning: without these headers, the request will fail._
+
+### Authentication
+- **[<code>POST</code> v1/auth/login](Authentication/login.md)**
+- **[<code>GET</code> v1/auth/avatar](Authentication/avatar.md)**
+- **[<code>GET</code> v1/auth/status](Authentication/status.md)**
+- **[<code>GET</code> v1/auth/ticket](Authentication/ticket.md)**
+
+### User
+##### Absence
+- **[<code>GET</code> v1/students/_{studentId}_/absences/details](Absences/absences.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/absences/details/_{begin}_](Absences/from.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/absences/details/_{begin}_/_{end}_](Absences/from_to.md)**
+##### Agenda
+- **[<code>GET</code> v1/students/_{studentId}_/agenda/all/_{begin}_/_{end}_](Agenda/from_to.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/agenda/_{eventCode}_/_{begin}_/_{end}_]()**
+##### Didactics
+- **[<code>GET</code> v1/students/_{studentId}_/didactics](Didactics/didactics.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/didactics/item/_{contentId}_]()**
+##### Notice Board
+- **[<code>GET</code> v1/students/_{studentId}_/noticeboard](Noticeboard/noticeboard.md)**
+- **[<code>POST</code> v1/students/_{studentId}_/noticeboard/read/_{eventCode}_/_{pubId}_/101]()**
+- **[<code>GET</code> v1/students/_{studentId}_/noticeboard/attach/_{eventCode}_/_{pubId}_/101]()**
+##### Schoolbooks
+- **[<code>GET</code> v1/students/_{studentId}_/schoolbooks](Schoolbooks/schoolbooks.md)**
+##### Calendar
+- **[<code>GET</code> v1/students/_{studentId}_/calendar/all](Calendar/calendar.md)** 🤔🤔🤔
+##### Card
+- **[<code>GET</code> v1/students/_{studentId}_/card](Card/card.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/cards](Card/cards.md)**
+##### Grades
+- **[<code>GET</code> v1/students/_{studentId}_/grades](Grades/grades.md)**
+##### Lessons
+- **[<code>GET</code> v1/students/_{studentId}_/lessons/today](Lessons/lessons.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/lessons/_{day}_](Lessons/lessons.md)**
+- **[<code>GET</code> v1/students/_{studentId}_/lessons/_{start}_/_{end}_](Lessons/lessons.md)**
+##### Notes
+- **[<code>GET</code> v1/students/_{studentId}_/notes/all](Notes/all.md)**
+- **[<code>POST</code> v1/students/_{studentId}_/notes/_{type}_/read/_{note}_](Notes/read.md)**
+##### Periods
+- **[<code>GET</code> v1/students/_{studentId}_/periods](Periods/periods.md)**
+##### Subjects
+- **[<code>GET</code> v1/students/_{studentId}_/subjects](Subjects/subjects.md)**
+##### Documents
+- **[<code>POST</code> v1/students/_{studentId}_/documents](Documents/documents.md)**
+- **[<code>POST</code> v1/students/_{studentId}_/documents/check/_{hash}_](Documents/check%20document.md)**
+- **[<code>POST</code> v1/students/_{studentId}_/documents/read/_{hash}_](Documents/read%20document.md)**
+### QR-Code
+##### Upload
+- **[<code>POST</code> tools/app/default/app_qrcode_token.php?a=aUPLIMG]()**
 
 - Student Ident è il "nome utente default (X000000000)"
 - Element ID è reperibile tra gli attributi degli oggetti restituiti dalla richiesta più generale

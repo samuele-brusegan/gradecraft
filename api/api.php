@@ -76,9 +76,12 @@ class ClassevivaIntegration {
         if ($this -> usr == null) return false;
 
         //Verifico che il token non sia scaduto
-        $dt1 = strtotime(date(DATE_ATOM, time()));
-        $dt2 = strtotime($_SESSION['classeviva_session_expiration_date']);
-        $isExpired = $dt1 > $dt2;
+        $isExpired = true;
+        if (isset($_SESSION['classeviva_session_expiration_date'])) {
+            $dt1 = strtotime(date(DATE_ATOM, time()));
+            $dt2 = strtotime($_SESSION['classeviva_session_expiration_date']);
+            $isExpired = $dt1 > $dt2;
+        }
 
         //Verifico di non essere già loggato
         if (isset($_SESSION['classeviva_auth_token']) && !$isExpired) {

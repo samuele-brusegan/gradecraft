@@ -6,6 +6,7 @@
  */
 
 include_once 'collegamenti.php';
+include_once 'apiMethods.php';
 $c = new Collegamenti();
 
 class User {
@@ -42,7 +43,7 @@ class User {
      * @param string $url The URL to which the request is sent.
      * @return mixed Returns the decoded JSON response if the HTTP status code is 200. Otherwise, returns an associative array containing the status code, raw response message, URL, headers, and response body.
      */
-    private function sendRequest(string $url, bool $isPost=false): mixed {
+    private function sendRequest(string $url, bool $isPost=false, string $request=null): mixed {
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
@@ -57,6 +58,16 @@ class User {
         $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         if ($httpcode == 200) {
+
+            global $methods;
+            if ($request != null) {
+                foreach ($methods as $key => $value) {
+                    if ($value['url'] == $request && isset($value['particularDataParse']) && $value['particularDataParse'] == 'PDF'){
+                        return ["pdfData" => $response];
+                    }
+                }
+            }
+
             return json_decode($response, true);
         }
         return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpcode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
@@ -106,37 +117,6 @@ class User {
         return false;
     }
 
-    /*public function getVoti() {
-        if (!$this->is_logged_in) return "Errore: non sei loggato";
-        global $c;
-        $c->setIdent($this->ident);
-        $url = $c -> collegamenti['voti'];
-
-        return $this->sendRequest($url);
-    }
-    public function getSubjects() {
-        if (!$this->is_logged_in) return null;
-        global $c;
-        $c->setIdent($this->ident);
-        $url = $c -> collegamenti['materie'];
-
-        return $this->sendRequest($url);
-    }
-    public function getStatus() {
-        if (!$this->is_logged_in) return "Errore: non sei loggato";
-        global $c;
-        $url = $c -> collegamenti['stato'];
-
-        return $this->sendRequest($url);
-    }
-    public function getTicket() {
-        if (!$this->is_logged_in) return "Errore: non sei loggato";
-        global $c;
-        $url = $c -> collegamenti['biglietto'];
-
-        return $this->sendRequest($url);
-    }*/
-
     public function genericQuery($request, $extraInput = null, $isPost=false) {
         if (!$this->is_logged_in) return ["error" => "NOT_LOGGED_IN", "message" => "Prima di chiamare un API (diversa da login) devi loggarti. Contattare il dev se vedete questo errore", "instr"=>"Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
         global $c;
@@ -148,7 +128,7 @@ class User {
         $c->setIdent($this->ident);
         $url = $c -> collegamenti[$request];
 
-        return $this->sendRequest($url, $isPost);
+        return $this->sendRequest($url, $isPost, $request);
     }
 
 
