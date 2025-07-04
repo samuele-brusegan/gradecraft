@@ -32,24 +32,22 @@
         <style>
             body {
                 font-family: 'Inter', sans-serif;
-                background-color: #f0f2f5;
+                background-color: #1a1a1a;
+
+                color: #e5e5e5;
             }
-            /*.container {*/
-            /*    max-width: 800px;*/
-            /*    margin: 40px auto;*/
-            /*    padding: 20px;*/
-            /*    background-color: #ffffff;*/
-            /*    border-radius: 12px;*/
-            /*    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);*/
-            /*}*/
+
             .input-field {
                 padding: 10px 15px;
-                border: 1px solid #d1d5db;
+                border: 1px solid #404040;
                 border-radius: 8px;
                 font-size: 1rem;
                 width: 100%;
-                box-sizing: border-box; /* Include padding and border in the element's total width and height */
+                box-sizing: border-box;
+                background-color: #262626;
+                color: #e5e5e5;
             }
+
             .btn {
                 padding: 10px 20px;
                 border-radius: 8px;
@@ -57,10 +55,12 @@
                 cursor: pointer;
                 transition: background-color 0.2s ease-in-out;
             }
+
             .btn-primary {
                 background-color: #4f46e5;
                 color: white;
             }
+
             .btn-primary:hover {
                 background-color: #4338ca;
             }
@@ -79,53 +79,62 @@
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 20px;
-                border: 2px solid red !important;
+                border: 2px solid #404040 !important;
             }
+
             .data-table th, .data-table td {
-                border: 1px solid #e5e7eb;
+                border: 1px solid #404040;
                 padding: 10px;
                 text-align: left;
             }
+
             .data-table th {
-                background-color: #f9fafb;
+                background-color: #262626;
                 font-weight: 600;
-                color: #374151;
+                color: #e5e5e5;
             }
+
             .message-box {
-                background-color: #d1fae5;
-                color: #065f46;
+                background-color: #065f46;
+                color: #d1fae5;
                 padding: 12px;
                 border-radius: 8px;
                 margin-bottom: 20px;
                 text-align: center;
                 font-weight: 600;
             }
+
             .error-message {
-                background-color: #fee2e2;
-                color: #991b1b;
+                background-color: #991b1b;
+                color: #fee2e2;
             }
+
             .loading-spinner {
-                border: 4px solid rgba(0, 0, 0, 0.1);
+                border: 4px solid rgba(255, 255, 255, 0.1);
                 border-left-color: #4f46e5;
                 border-radius: 50%;
                 width: 24px;
                 height: 24px;
                 animation: spin 1s linear infinite;
-                /*display: inline-block;*/
                 vertical-align: middle;
                 margin-left: 10px;
-                display: none; /* Hidden by default */
+                display: none;
             }
+
             @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
+                0% {
+                    transform: rotate(0deg);
+                }
+                100% {
+                    transform: rotate(360deg);
+                }
             }
         </style>
     </head>
-    <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <body class="flex items-center justify-center min-h-screen">
         
         <div class="/*container*/ w-100 p-8">
-            <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">GradeCraft - Integrazione Classeviva</h1>
+            <h1 class="text-3xl font-bold text-center mb-6 text-gray-100">GradeCraft - Integrazione Classeviva</h1>
 
             <div id="message-area" class="message-box error-message hidden">
 
@@ -133,13 +142,13 @@
 
             <!-- Login Area -->
             <div class="mb-6" id="login-section">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">Accedi a Classeviva</h2>
+                <h2 class="text-xl font-semibold mb-4 text-gray-200">Accedi a Classeviva</h2>
                 <div class="mb-4">
-                    <label for="username" class="block text-gray-700 text-sm font-medium mb-2">Username Classeviva:</label>
+                    <label for="username" class="block text-gray-200 text-sm font-medium mb-2">Username Classeviva:</label>
                     <input type="text" id="username" class="input-field" placeholder="Inserisci il tuo username">
                 </div>
                 <div class="mb-4">
-                    <label for="password" class="block text-gray-700 text-sm font-medium mb-2">Password Classeviva:</label>
+                    <label for="password" class="block text-gray-200 text-sm font-medium mb-2">Password Classeviva:</label>
                     <input type="password" id="password" class="input-field" placeholder="Inserisci la tua password">
                 </div>
                 <button id="loginBtn" class="btn btn-primary w-full flex items-center justify-center">
@@ -153,7 +162,7 @@
 
             <!-- Dropdown per chiamare una funzione di fetch specifico -->
             <div class="mb-4 hidden" id="select-method">
-                <label for="fetch-method" class="block text-gray-700 text-sm font-medium mb-2">Seleziona i dati da visualizzare:</label>
+                <label for="fetch-method" class="block text-gray-300 text-sm font-medium mb-2">Seleziona i dati da visualizzare:</label>
                 <div class="flex gap-2">
                     <select id="fetch-method" class="input-field">
                         <?php
@@ -172,10 +181,10 @@
                 </div>
             </div>
             <div id="data-section" class="hidden">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">Dati Recuperati da Classeviva</h2>
+                <h2 class="text-xl font-semibold mb-4 text-gray-200">Dati Recuperati da Classeviva</h2>
 
                 <div class="mb-6">
-                    <h3 class="text-lg font-medium mb-3 text-gray-700">Dati</h3>
+                    <h3 class="text-lg font-medium mb-3 text-gray-200">Dati</h3>
                     <div id="cvv-data-output">
                         <table class="data-table">
                             <thead>
@@ -184,7 +193,7 @@
                             <tbody class="cvv-data-table-body"></tbody>
                         </table>
                         <div class="cvv-data-buttons"></div>
-                        <p id="no-data-message" class="text-gray-600 mt-4 hidden">Nessun dato richiesto trovato.</p>
+                        <p id="no-data-message" class="text-gray-400 mt-4 hidden">Nessun dato richiesto trovato.</p>
                     </div>
                 </div>
             </div>
@@ -503,6 +512,14 @@
                 function displayData(parentTable, data, page = 0) {
                     parentTable.innerHTML = '';
 
+                    // Se è una stringa semplice, mostrala direttamente
+                    if (typeof data === 'string') {
+                        const p = document.createElement('p');
+                        p.textContent = data;
+                        parentTable.appendChild(p);
+                        return;
+                    }
+
                     const table = document.createElement('table');
                     table.classList.add('data-table');
 
@@ -539,14 +556,25 @@
                         return;
                     }
 
-
                     // Costanti per paginazione
                     const PAGE_LIMIT = 10;
                     let startIndex = page * PAGE_LIMIT;
                     let endIndex = startIndex + PAGE_LIMIT;
 
-                    // Creazione intestazioni
-                    Object.keys(dataArray[startIndex]).forEach(prop => {
+                    // Determina le intestazioni in base al tipo di dati nel primo elemento
+                    let headers = [];
+                    if (typeof dataArray[startIndex] === 'string') {
+                        // Se l'array contiene stringhe, usa una singola intestazione "Value"
+                        headers = ['Value'];
+                    } else if (typeof dataArray[startIndex] === 'object' && dataArray[startIndex] !== null) {
+                        // Se è un oggetto, usa le sue chiavi come intestazioni
+                        headers = Object.keys(dataArray[startIndex]);
+                    } else {
+                        // Per altri tipi primitivi (number, boolean), usa "Value"
+                        headers = ['Value'];
+                    }
+
+                    headers.forEach(prop => {
                         const th = document.createElement('th');
                         th.textContent = prop;
                         tr.appendChild(th);
@@ -555,23 +583,35 @@
                     // Popolamento righe
                     dataArray.slice(startIndex, PAGE_LIMIT !== -1 ? endIndex : undefined).forEach(el => {
                         const row = tbody.insertRow();
-                        Object.keys(el).forEach(prop => {
-                            const cell = row.insertCell();
-                            const value = el[prop];
 
-                            if (value !== null && typeof value === 'object') {
-                                // Gestione di array e oggetti
-                                if (Array.isArray(value) || Object.keys(value).length > 0) {
-                                    const subTableContainer = document.createElement('div');
-                                    displayData(subTableContainer, value);
-                                    cell.appendChild(subTableContainer);
+                        if (typeof el === 'string' || typeof el === 'number' || typeof el === 'boolean') {
+                            // Se l'elemento è una stringa o un primitivo, crea una singola cella per il suo valore
+                            const cell = row.insertCell();
+                            cell.textContent = el ?? '';
+                        } else if (typeof el === 'object' && el !== null) {
+                            // Se l'elemento è un oggetto, itera sulle sue chiavi
+                            headers.forEach(prop => {
+                                const cell = row.insertCell();
+                                const value = el[prop];
+
+                                if (value !== null && typeof value === 'object') {
+                                    // Gestione di array e oggetti annidati
+                                    if (Array.isArray(value) || Object.keys(value).length > 0) {
+                                        const subTableContainer = document.createElement('div');
+                                        displayData(subTableContainer, value); // Chiamata ricorsiva
+                                        cell.appendChild(subTableContainer);
+                                    } else {
+                                        cell.textContent = ''; // Oggetto vuoto
+                                    }
                                 } else {
-                                    cell.textContent = '';
+                                    cell.textContent = value ?? '';
                                 }
-                            } else {
-                                cell.textContent = value ?? '';
-                            }
-                        });
+                            });
+                        } else {
+                            // Gestione di altri casi non previsti, potrebbe essere null/undefined
+                            const cell = row.insertCell();
+                            cell.textContent = el ?? '';
+                        }
                     });
 
                     // Gestione paginazione
