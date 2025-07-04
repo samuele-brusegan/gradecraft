@@ -28,6 +28,7 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js" integrity="sha384-RuyvpeZCxMJCqVUGFI0Do1mQrods/hhxYlcVfGPOfQtPJh0JCw12tUAZ/Mv10S7D" crossorigin="anonymous"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<!--        <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">-->
         <style>
             body {
                 font-family: 'Inter', sans-serif;
@@ -78,6 +79,7 @@
                 width: 100%;
                 border-collapse: collapse;
                 margin-top: 20px;
+                border: 2px solid red !important;
             }
             .data-table th, .data-table td {
                 border: 1px solid #e5e7eb;
@@ -175,11 +177,11 @@
                     <div id="cvv-data-output">
                         <table class="data-table">
                             <thead>
-                            <tr id="cvv-data-table-head"></tr>
+                            <tr class="cvv-data-table-head"></tr>
                             </thead>
-                            <tbody id="cvv-data-table-body"></tbody>
+                            <tbody class="cvv-data-table-body"></tbody>
                         </table>
-                        <div id="cvv-data-buttons"></div>
+                        <div class="cvv-data-buttons"></div>
                         <p id="no-data-message" class="text-gray-600 mt-4 hidden">Nessun dato richiesto trovato.</p>
                     </div>
                 </div>
@@ -404,26 +406,43 @@
                             global $methods;
                             echo json_encode($methods);
                         ?>;
-                        let method = null;
-                        let path = null;
-                        let httpMethod = null;
-                        let url = null;
+
+                        let method              = null;
+                        let path                = null;
+                        let httpMethod          = null;
+                        let url                 = null;
+                        let extraInputRequests  = null;
+                        let cvvArrKey           = null;
+                        let requestMethod       = null;
 
                         if (methods.hasOwnProperty(requestedMethod)) {
                             method = methods[requestedMethod];
                             path = method['path'];
                             url = method['url'];
                             httpMethod = method['method'];
-                            console.log(path)
+                            extraInputRequests = method['extraInput'];
+                            cvvArrKey = method['cvvArrKey']
+                            requestMethod = method['reqMethod'];
+                            //console.log(path)
                         } else {
                             throw new Error(`Metodo non supportato: ${requestedMethod}, ${methods}`);
                         }
 
+                        let extraInput = {};
+                        extraInputRequests.forEach(req => {
+                            let inp;
+                            while (true) {
+                                inp = prompt(`Inserisci ${req}:`);
+                                if (inp !== null && inp !== '') break;
+                            }
+                            extraInput[req] = inp;
+                        })
+                        console.log(extraInput)
 
                         const apiResponse = await fetch(`${backendBaseUrl}${path}`, {
                             method: `${httpMethod}`,
                             headers: { 'Content-Type': 'application/json', },
-                            body: JSON.stringify( url )
+                            body: JSON.stringify( {'request':url, 'extraInput':extraInput, "cvvArrKey":cvvArrKey, "isPost":(requestMethod === 'POST')} ),
                         });
 
                         // Tentativo di leggere la risposta come JSON.
@@ -536,7 +555,8 @@
                     const selectedMethod = document.getElementById('fetch-method').value;
                     let resp = await fetchClasseviva(selectedMethod);
                     if (resp.status === "non_json_output") { return; }
-                    displayData(resp);
+                    let parTab = document.querySelector('#cvv-data-output')
+                    displayData(parTab, resp);
                 });
 
 
@@ -592,20 +612,44 @@
                         noGradesMessage.classList.remove('hidden');
                     }
                 }
-                function displayData(data, page=0) {
-                    let dataTableBody = document.getElementById('cvv-data-table-body');
+                function displayData(parentTable, data, page=0, isFT = true) {
+                    //console.log(table)
+                    parentTable.innerHTML = '';
+                    console.log("Dovrebbe essere vuoto: " + parentTable.innerHTML)
+
+                    let table = document.createElement('table');
+                    table.classList.add('data-table');
+                    table.innerHTML = '';
+                    parentTable.appendChild(table);
+
+                    let thead = document.createElement('thead');
+                    let tr = document.createElement('tr');
+                    tr.classList.add('cvv-data-table-head');
+                    thead.appendChild(tr);
+                    table.appendChild(thead);
+
+                    let tbody = document.createElement('tbody');
+                    tbody.classList.add('cvv-data-table-body');
+                    table.appendChild(tbody);
+
+                    let pageNavigation = document.createElement('div');
+                    pageNavigation.classList.add('cvv-data-buttons');
+                    parentTable.appendChild(pageNavigation);
+
+
+                    let dataTableBody = tbody;
+                    let head = thead;
+
                     console.log("Display generica data")
-                    console.log(data)
-                    console.log(data.length)
+
                     dataSection.classList.remove('hidden');
                     dataTableBody.innerHTML = ''; // Pulisce la tabella
+                    head.innerHTML = '';
 
                     if (data !== null && data.length > 0) {
                         noDataMessage.classList.add('hidden');
                         let i = 0;
                         let PAGE_LIMIT = 10;
-                        let head = document.getElementById("cvv-data-table-head")
-                        head.innerHTML = '';
                         Object.keys(data[0]).map(prop => {
                             let th = document.createElement('th');
                             th.textContent = prop;
@@ -613,20 +657,21 @@
                         })
 
                         data.forEach(el => {
+                            if (isFT) console.log(el);
 
                             if (PAGE_LIMIT !== -1 && i >= (page * PAGE_LIMIT) && i < ((page + 1) * PAGE_LIMIT)) {
-                                const row = dataTableBody.insertRow();
-                                console.log(el)
+                                let row = dataTableBody.insertRow();
                                 Object.keys(el).map(prop => {
-                                    let out = '';
-                                    try {
-                                        el[prop].forEach((obj) => {
-                                            out += JSON.stringify(obj);
-                                        });
-                                    } catch (e) {
-                                        out = el[prop];
+                                    //let out = '';
+                                    if (el[prop] !== null && el[prop].constructor === Array) {
+
+                                        let subTableCont = document.createElement('div');
+                                        displayData(subTableCont, el[prop]);
+                                        row.insertCell().appendChild(subTableCont);
+
+                                    } else {
+                                        row.insertCell().textContent = el[prop];
                                     }
-                                    row.insertCell().textContent = out;
                                 })
 
                             }
@@ -635,10 +680,8 @@
 
                         //Bottoni per il multi-paging
                         if ( PAGE_LIMIT !== -1 && data.length > PAGE_LIMIT) {
-                            document.getElementById('cvv-data-buttons').innerHTML = '';
-                            let pageBnts = document.createElement('div');
-                            pageBnts.display = 'flex';
-                            pageBnts.justifyContent = 'justify-between';
+                            // pageNavigation.classList.add('cvv-data-buttons');
+                            pageNavigation.innerHTML = '';
 
                             //Se c'è una pagina precedente
                             if ( page > 0 ) {
@@ -646,30 +689,26 @@
                                 prevPageBtn.textContent = 'Prev Page';
                                 prevPageBtn.classList.add('btn');
                                 prevPageBtn.classList.add('btn-primary');
-                                prevPageBtn.addEventListener('click', () => displayData(data, page - 1))
-                                pageBnts.appendChild(prevPageBtn);
+                                prevPageBtn.addEventListener('click', () => displayData(parentTable, data, page - 1, false))
+                                pageNavigation.appendChild(prevPageBtn);
                             }
                             //Se c'è una pagina successiva
                             if ( (page + 1) * PAGE_LIMIT < data.length ) {
                                 let nextPageBtn = document.createElement('button');
                                 nextPageBtn.textContent = 'Next Page';
-                                nextPageBtn.addEventListener('click', () => displayData(data, page + 1))
+                                nextPageBtn.addEventListener('click', () => displayData(parentTable, data, page + 1, false))
                                 nextPageBtn.classList.add('btn');
                                 nextPageBtn.classList.add('btn-primary');
-                                pageBnts.appendChild(nextPageBtn);
+                                pageNavigation.appendChild(nextPageBtn);
                             }
-
-                            document.getElementById('cvv-data-buttons').appendChild(pageBnts);
                         }
 
                     }
                     else if (!data.hasOwnProperty('length')) {
 
-                        //TODO: Fix dup. code
+                        //TODO: Fix sim-dup. code
 
                         let el = data;
-                        let head = document.getElementById("cvv-data-table-head")
-                        head.innerHTML = '';
                         Object.keys(el).map(prop => {
                             let th = document.createElement('th');
                             th.textContent = prop;
@@ -681,9 +720,9 @@
                         Object.keys(el).map(prop => {
                             let out = '';
                             try {
-                                el[prop].forEach((obj) => {
-                                    out += JSON.stringify(obj);
-                                });
+                                let subTableCont = document.createElement('div');
+                                displayData(subTableCont, el[prop]);
+                                row.insertCell().appendChild(subTableCont);
                             } catch (e) {
                                 out = el[prop];
                             }
