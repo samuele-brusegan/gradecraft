@@ -75,11 +75,16 @@ class ClassevivaIntegration {
         //Dev'esistere un utente da loggare
         if ($this -> usr == null) return false;
 
+        //Verifico che il token non sia scaduto
+        $dt1 = strtotime(date(DATE_ATOM, time()));
+        $dt2 = strtotime($_SESSION['classeviva_session_expiration_date']);
+        $isExpired = $dt1 > $dt2;
+
         //Verifico di non essere già loggato
-        if (isset($_SESSION['classeviva_auth_token']) && date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date']) {
+        if (isset($_SESSION['classeviva_auth_token']) && !$isExpired) {
             if($_SESSION['classeviva_ident'] == $this -> usr -> uid || $_SESSION['classeviva_username'] == $this -> usr -> uid) {
                 $this -> usr -> token = $_SESSION['classeviva_auth_token'];
-                return array("status" => "602", "studentId" => $_SESSION['classeviva_ident'], "username" => $_SESSION['classeviva_username']);
+                return array("status" => "602", "studentId" => $_SESSION['classeviva_ident'], "username" => $_SESSION['classeviva_username'], "expire" => $_SESSION['classeviva_session_expiration_date'], "request" => $_SESSION['classeviva_session_request_date']);
             }
         }
 
@@ -121,14 +126,17 @@ class ClassevivaIntegration {
         return $this -> usr -> getTicket();
     }
 
-    public function genericQuery($request) {
+    public function genericQuery($request, $extraInput = null, $isPost=false) : array {
         //Dev'esistere un utente
-        if ($this -> usr == null) return 'noUsr';
+        global $c;
+        if ($this -> usr == null) return ["error" => 'NO_USER', "message" => "Prima di chiamare un API (diversa da login) devi loggarti.", "instr"=>"Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
         //Restituisco
+//        echo $c->collegamenti[$request];
         if (isset($c->collegamenti[$request])) {
-            return $this->usr->genericQuery($request);
+            return $this->usr->genericQuery($request, $extraInput, $isPost);
         } else {
-            return 'wrongRequest';
+            $apis = array_keys($c->collegamenti);
+            return ["error" => 'WRONG_API_REQUEST', "message" => "API ".$request." non trovata.", "apis" => $apis];
         }
     }
 }
@@ -223,20 +231,25 @@ switch ($_SERVER['REQUEST_METHOD'] . ':' . $request_path) {
         }
         break;
     case 'POST:generic':
-        $request = json_decode(file_get_contents('php://input'), true);
+        $body = json_decode(file_get_contents('php://input'), true);
+        //print_r($body['isPost']);
         $cvvApi = new ClassevivaIntegration();
         $user   = $cvvApi -> loadUser();
+        $resp = ["status" => "000", "message" => "API call not started (Commented row?)", "error" => "1"];
 
-        $resp = $cvvApi -> genericQuery($request);
 
-        //TODO: Gestire >1 parametri
+        $resp = $cvvApi -> genericQuery($body['request'], $body['extraInput'], $body['isPost']);
 
         if (isset($resp['error'])) {
             http_response_code(401); // Unauthorized o altro errore
-            echo json_encode(["message" => $resp['error']]);
+            echo json_encode($resp);
         } else {
             http_response_code(200);
-            echo json_encode($resp);
+            if ($body['cvvArrKey'] != "" && $body['cvvArrKey'] != null && isset($resp[$body['cvvArrKey']])) {
+                echo json_encode($resp[$body['cvvArrKey']]);
+            } else {
+                echo json_encode($resp);
+            }
         }
         break;
         

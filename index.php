@@ -34,14 +34,14 @@
                 font-family: 'Inter', sans-serif;
                 background-color: #f0f2f5;
             }
-            .container {
-                max-width: 800px;
-                margin: 40px auto;
-                padding: 20px;
-                background-color: #ffffff;
-                border-radius: 12px;
-                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            }
+            /*.container {*/
+            /*    max-width: 800px;*/
+            /*    margin: 40px auto;*/
+            /*    padding: 20px;*/
+            /*    background-color: #ffffff;*/
+            /*    border-radius: 12px;*/
+            /*    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);*/
+            /*}*/
             .input-field {
                 padding: 10px 15px;
                 border: 1px solid #d1d5db;
@@ -127,7 +127,9 @@
         <div class="/*container*/ w-100 p-8">
             <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">GradeCraft - Integrazione Classeviva</h1>
 
-            <div id="message-area" class="hidden"></div>
+            <div id="message-area" class="message-box error-message hidden">
+
+            </div>
 
             <!-- Login Area -->
             <div class="mb-6" id="login-section">
@@ -210,9 +212,6 @@
                 const passwordInput     = document.getElementById('password');
                 const loginBtn          = document.getElementById('loginBtn');
                 const dataSection       = document.getElementById('data-section');
-                const gradesTableBody   = document.getElementById('grades-table-body');
-                const topicsTableBody   = document.getElementById('topics-table-body');
-                const noGradesMessage   = document.getElementById('no-grades-message');
                 const noDataMessage     = document.getElementById('no-data-message');
                 const messageArea       = document.getElementById('message-area');
                 const loadingSpinner    = document.getElementById('loadingSpinner');
@@ -379,22 +378,6 @@
                 }
 
                 //=== Dati ===
-                async function fetchClassevivaAll() {
-                    hideMessage();
-                    toggleLoading(true);
-
-                    try {
-
-                        await fetchClasseviva('get_grades');
-                        await fetchClasseviva('subjects');
-
-                    } catch (error) {
-                        console.error('Errore:', error);
-                        showMessage(`Errore: ${error.message}. `, 'error');
-                    } finally {
-                        toggleLoading(false);
-                    }
-                }
                 async function fetchClasseviva(requestedMethod) {
                     hideMessage();
                     toggleLoading(true);
@@ -415,18 +398,19 @@
                         let cvvArrKey           = null;
                         let requestMethod       = null;
 
-                        if (methods.hasOwnProperty(requestedMethod)) {
-                            method = methods[requestedMethod];
-                            path = method['path'];
-                            url = method['url'];
-                            httpMethod = method['method'];
-                            extraInputRequests = method['extraInput'];
-                            cvvArrKey = method['cvvArrKey']
-                            requestMethod = method['reqMethod'];
-                            //console.log(path)
-                        } else {
-                            throw new Error(`Metodo non supportato: ${requestedMethod}, ${methods}`);
-                        }
+                        if (methods) {
+                            if (methods.hasOwnProperty(requestedMethod)) {
+                                method = methods[requestedMethod];
+                                path = method['path'];
+                                url = method['url'];
+                                httpMethod = method['method'];
+                                extraInputRequests = method['extraInput'];
+                                cvvArrKey = method['cvvArrKey']
+                                requestMethod = method['reqMethod'];
+                            } else {
+                                throw new Error(`Metodo non supportato: ${requestedMethod}, ${methods}`);
+                            }
+                        } else { throw new Error(`Metodi non trovati ?!`); }
 
                         let extraInput = {};
                         extraInputRequests.forEach(req => {
@@ -462,49 +446,6 @@
                         }
 
                         if (result.status === "non_json_output") {
-                            // Gestisce il caso in cui il PHP stampa debug output
-                            showMessage(`Errore: ${result.message}`, 'error');
-                            messageArea.innerHTML += result.rawResponse;
-                            console.warn("Risposta PHP non JSON:", result.rawResponse);
-                            // Non procedere con l'elaborazione dei dati se la risposta non è JSON valida.
-                        }
-                        return result;
-
-                    } catch (error) {
-                        console.error('Errore:', error);
-                        showMessage(`Errore: ${error.message}. `, 'error');
-                    } finally {
-                        toggleLoading(false);
-                    }
-                }
-                async function fetchClassevivaVoti() {
-                    console.log("Retrive grades")
-                    hideMessage();
-                    toggleLoading(true);
-                    dataSection.classList.add('hidden'); // Nasconde la sezione dati mentre si carica
-
-                    try {
-                        const gradesResponse = await fetch(`${backendBaseUrl}grades`, {
-                            method: 'GET',
-                            headers: { 'Content-Type': 'application/json', },
-                        });
-
-                        let result;
-                        let responseText = await gradesResponse.text();
-                        try {
-                            result = JSON.parse(responseText);
-                        } catch (e) {
-                            console.error("Errore di parsing JSON. La risposta grezza è:", responseText);
-                            result = {
-                                status: "non_json_output",
-                                message: "Il backend ha inviato un output non JSON. Controlla la console per il debug del PHP.",
-                                rawResponse: responseText,
-                            };
-                        }
-
-                        if (result === null) throw new Error('Non ci sono voti.');
-
-                        if ('status' in result && result.status === "non_json_output") {
                             // Gestisce il caso in cui il PHP stampa debug output
                             showMessage(`Errore: ${result.message}`, 'error');
                             messageArea.innerHTML += result.rawResponse;
@@ -559,180 +500,104 @@
                     displayData(parTab, resp);
                 });
 
-
-                function displayGrades(grades, page=0) {
-                    console.log("Display grades")
-                    dataSection.classList.remove('hidden');
-                    gradesTableBody.innerHTML = '';
-                    if (grades !== null && grades.length > 0) {
-                        noGradesMessage.classList.add('hidden');
-                        let gradeNum = 0;
-                        let PAGE_LIMIT = 10;
-                        grades.forEach(grade => {
-
-                            if (PAGE_LIMIT !== -1 && gradeNum >= (page * PAGE_LIMIT) && gradeNum < ((page + 1) * PAGE_LIMIT)) {
-                                const row = gradesTableBody.insertRow();
-                                row.insertCell().textContent = grade["subjectDesc"];
-                                row.insertCell().textContent = grade["displayValue"];
-                                row.insertCell().textContent = grade["evtDate"];
-                                row.insertCell().textContent = grade["notesForFamily"];
-                            }
-                            gradeNum++;
-                        });
-
-                        //Bottoni per il multi-paging
-                        if ( PAGE_LIMIT !== -1 && grades.length > PAGE_LIMIT) {
-                            let pageBnts = document.createElement('div');
-                            pageBnts.display = 'flex';
-                            pageBnts.justifyContent = 'justify-between';
-
-                            //Se c'è una pagina precedente
-                            if ( page > 0 ) {
-                                let prevPageBtn = document.createElement('button');
-                                prevPageBtn.textContent = 'Prev Page';
-                                prevPageBtn.classList.add('btn');
-                                prevPageBtn.classList.add('btn-primary');
-                                prevPageBtn.addEventListener('click', () => displayGrades(grades, page - 1))
-                                pageBnts.appendChild(prevPageBtn);
-                            }
-                            //Se c'è una pagina successiva
-                            if ( (page + 1) * PAGE_LIMIT < grades.length ) {
-                                let nextPageBtn = document.createElement('button');
-                                nextPageBtn.textContent = 'Next Page';
-                                nextPageBtn.addEventListener('click', () => displayGrades(grades, page + 1))
-                                nextPageBtn.classList.add('btn');
-                                nextPageBtn.classList.add('btn-primary');
-                                pageBnts.appendChild(nextPageBtn);
-                            }
-
-                            gradesTableBody.appendChild(pageBnts);
-                        }
-
-                    } else {
-                        noGradesMessage.classList.remove('hidden');
-                    }
-                }
-                function displayData(parentTable, data, page=0, isFT = true) {
-                    //console.log(table)
+                function displayData(parentTable, data, page = 0) {
                     parentTable.innerHTML = '';
-                    console.log("Dovrebbe essere vuoto: " + parentTable.innerHTML)
 
-                    let table = document.createElement('table');
+                    const table = document.createElement('table');
                     table.classList.add('data-table');
-                    table.innerHTML = '';
-                    parentTable.appendChild(table);
 
-                    let thead = document.createElement('thead');
-                    let tr = document.createElement('tr');
+                    const thead = document.createElement('thead');
+                    const tr = document.createElement('tr');
                     tr.classList.add('cvv-data-table-head');
                     thead.appendChild(tr);
                     table.appendChild(thead);
 
-                    let tbody = document.createElement('tbody');
+                    const tbody = document.createElement('tbody');
                     tbody.classList.add('cvv-data-table-body');
                     table.appendChild(tbody);
 
-                    let pageNavigation = document.createElement('div');
+                    const pageNavigation = document.createElement('div');
                     pageNavigation.classList.add('cvv-data-buttons');
+
+                    parentTable.appendChild(table);
                     parentTable.appendChild(pageNavigation);
 
-
-                    let dataTableBody = tbody;
-                    let head = thead;
-
-                    console.log("Display generica data")
-
                     dataSection.classList.remove('hidden');
-                    dataTableBody.innerHTML = ''; // Pulisce la tabella
-                    head.innerHTML = '';
 
-                    if (data !== null && data.length > 0) {
-                        noDataMessage.classList.add('hidden');
-                        let i = 0;
-                        let PAGE_LIMIT = 10;
-                        Object.keys(data[0]).map(prop => {
-                            let th = document.createElement('th');
-                            th.textContent = prop;
-                            head.appendChild(th);
-                        })
+                    // Gestione dati vuoti
+                    if (!data) {
+                        noDataMessage.classList.remove('hidden');
+                        return;
+                    }
 
-                        data.forEach(el => {
-                            if (isFT) console.log(el);
+                    noDataMessage.classList.add('hidden');
 
-                            if (PAGE_LIMIT !== -1 && i >= (page * PAGE_LIMIT) && i < ((page + 1) * PAGE_LIMIT)) {
-                                let row = dataTableBody.insertRow();
-                                Object.keys(el).map(prop => {
-                                    //let out = '';
-                                    if (el[prop] !== null && el[prop].constructor === Array) {
+                    // Normalizza i dati in array per gestione uniforme
+                    const dataArray = Array.isArray(data) ? data : [data];
+                    if (dataArray.length === 0) {
+                        noDataMessage.classList.remove('hidden');
+                        return;
+                    }
 
-                                        let subTableCont = document.createElement('div');
-                                        displayData(subTableCont, el[prop]);
-                                        row.insertCell().appendChild(subTableCont);
 
-                                    } else {
-                                        row.insertCell().textContent = el[prop];
-                                    }
-                                })
+                    // Costanti per paginazione
+                    const PAGE_LIMIT = 10;
+                    let startIndex = page * PAGE_LIMIT;
+                    let endIndex = startIndex + PAGE_LIMIT;
 
+                    // Creazione intestazioni
+                    Object.keys(dataArray[startIndex]).forEach(prop => {
+                        const th = document.createElement('th');
+                        th.textContent = prop;
+                        tr.appendChild(th);
+                    });
+
+                    // Popolamento righe
+                    dataArray.slice(startIndex, PAGE_LIMIT !== -1 ? endIndex : undefined).forEach(el => {
+                        const row = tbody.insertRow();
+                        Object.keys(el).forEach(prop => {
+                            const cell = row.insertCell();
+                            const value = el[prop];
+
+                            if (value !== null && typeof value === 'object') {
+                                // Gestione di array e oggetti
+                                if (Array.isArray(value) || Object.keys(value).length > 0) {
+                                    const subTableContainer = document.createElement('div');
+                                    displayData(subTableContainer, value);
+                                    cell.appendChild(subTableContainer);
+                                } else {
+                                    cell.textContent = '';
+                                }
+                            } else {
+                                cell.textContent = value ?? '';
                             }
-                            i++;
                         });
+                    });
 
-                        //Bottoni per il multi-paging
-                        if ( PAGE_LIMIT !== -1 && data.length > PAGE_LIMIT) {
-                            // pageNavigation.classList.add('cvv-data-buttons');
-                            pageNavigation.innerHTML = '';
+                    // Gestione paginazione
+                    if (PAGE_LIMIT !== -1 && dataArray.length > PAGE_LIMIT) {
+                        pageNavigation.innerHTML = '';
 
-                            //Se c'è una pagina precedente
-                            if ( page > 0 ) {
-                                let prevPageBtn = document.createElement('button');
-                                prevPageBtn.textContent = 'Prev Page';
-                                prevPageBtn.classList.add('btn');
-                                prevPageBtn.classList.add('btn-primary');
-                                prevPageBtn.addEventListener('click', () => displayData(parentTable, data, page - 1, false))
-                                pageNavigation.appendChild(prevPageBtn);
-                            }
-                            //Se c'è una pagina successiva
-                            if ( (page + 1) * PAGE_LIMIT < data.length ) {
-                                let nextPageBtn = document.createElement('button');
-                                nextPageBtn.textContent = 'Next Page';
-                                nextPageBtn.addEventListener('click', () => displayData(parentTable, data, page + 1, false))
-                                nextPageBtn.classList.add('btn');
-                                nextPageBtn.classList.add('btn-primary');
-                                pageNavigation.appendChild(nextPageBtn);
-                            }
+                        if (page > 0) {
+                            const prevPageBtn = createPageButton('Prev Page', () =>
+                                displayData(parentTable, data, page - 1));
+                            pageNavigation.appendChild(prevPageBtn);
                         }
 
+                        if (endIndex < dataArray.length) {
+                            const nextPageBtn = createPageButton('Next Page', () =>
+                                displayData(parentTable, data, page + 1));
+                            pageNavigation.appendChild(nextPageBtn);
+                        }
                     }
-                    else if (!data.hasOwnProperty('length')) {
+                }
 
-                        //TODO: Fix sim-dup. code
-
-                        let el = data;
-                        Object.keys(el).map(prop => {
-                            let th = document.createElement('th');
-                            th.textContent = prop;
-                            head.appendChild(th);
-                        })
-
-                        const row = dataTableBody.insertRow();
-                        console.log(el)
-                        Object.keys(el).map(prop => {
-                            let out = '';
-                            try {
-                                let subTableCont = document.createElement('div');
-                                displayData(subTableCont, el[prop]);
-                                row.insertCell().appendChild(subTableCont);
-                            } catch (e) {
-                                out = el[prop];
-                            }
-                            row.insertCell().textContent = out;
-                        })
-
-                    }
-                    else {
-                        noDataMessage.classList.remove('hidden');
-                    }
+                function createPageButton(text, onClick) {
+                    const button = document.createElement('button');
+                    button.textContent = text;
+                    button.classList.add('btn', 'btn-primary');
+                    button.addEventListener('click', onClick);
+                    return button;
                 }
             });
         </script>
