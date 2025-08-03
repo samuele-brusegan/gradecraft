@@ -5,6 +5,8 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 
+use api\Collegamenti;
+
 include_once 'collegamenti.php';
 $c = new Collegamenti();
 
@@ -321,6 +323,15 @@ $methods = [
         ],
         "reqMethod" => "POST"
     ],
+    "cambia_anno_scolastico" => [
+        "name"  => "cambia_anno_scolastico",
+        "path"  => "chYear",
+        "method" => "POST",
+        "cvvArrKey" => "",
+        "extraInput" => [
+            "year"
+        ]
+    ]
     /*"avatar"            => [
         "name"  => "avatar",
         "path"  => "generic",

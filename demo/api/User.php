@@ -5,6 +5,8 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 
+namespace api;
+
 include_once 'collegamenti.php';
 include_once 'apiMethods.php';
 $c = new Collegamenti();
@@ -31,7 +33,7 @@ class User {
      * @param string|null $password The password for authentication. Defaults to null if not provided.
      * @return void
      */
-    public function __construct(string $username=null, string $password=null) {
+    public function __construct(string $username = null, string $password = null) {
         $this->uid = $username;
         $this->pwd = $password;
     }
@@ -43,7 +45,7 @@ class User {
      * @param string $url The URL to which the request is sent.
      * @return mixed Returns the decoded JSON response if the HTTP status code is 200. Otherwise, returns an associative array containing the status code, raw response message, URL, headers, and response body.
      */
-    private function sendRequest(string $url, bool $isPost=false, string $request=null): mixed {
+    private function sendRequest(string $url, bool $isPost = false, string $request = null): mixed {
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
@@ -55,14 +57,14 @@ class User {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        if ($httpcode == 200) {
+        if ($httpCode == 200) {
 
             global $methods;
             if ($request != null) {
                 foreach ($methods as $key => $value) {
-                    if ($value['url'] == $request && isset($value['particularDataParse']) && $value['particularDataParse'] == 'PDF'){
+                    if ($value['url'] == $request && isset($value['particularDataParse']) && $value['particularDataParse'] == 'PDF') {
                         return ["pdfData" => $response];
                     }
                 }
@@ -70,12 +72,12 @@ class User {
 
             return json_decode($response, true);
         }
-        return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpcode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
+        return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
     }
 
     public function login(): string|false {
         global $c;
-        $url = $c -> collegamenti['login'];
+        $url = $c->collegamenti['login'];
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
@@ -92,14 +94,14 @@ class User {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         $response = curl_exec($ch);
-        $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         $this->last_login_response = [
-            'httpcode' => $httpcode,
+            'httpcode' => $httpCode,
             'raw' => $response,
             'decoded' => json_decode($response, true)
         ];
-        if ($httpcode == 200) {
+        if ($httpCode == 200) {
             $data = $this->last_login_response['decoded'];
             if (isset($data['ident']) && isset($data['token'])) {
                 preg_match('/\d+/', $data['ident'], $matches);
@@ -117,8 +119,8 @@ class User {
         return false;
     }
 
-    public function genericQuery($request, $extraInput = null, $isPost=false) {
-        if (!$this->is_logged_in) return ["error" => "NOT_LOGGED_IN", "message" => "Prima di chiamare un API (diversa da login) devi loggarti. Contattare il dev se vedete questo errore", "instr"=>"Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
+    public function genericQuery($request, $extraInput = null, $isPost = false) {
+        if (!$this->is_logged_in) return ["error" => "NOT_LOGGED_IN", "message" => "Prima di chiamare un API (diversa da login) devi autenticarti. Contattare il dev se vedete questo errore", "instr" => "Per autenticarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
         global $c;
         if ($extraInput != null) {
             foreach ($extraInput as $key => $value) {
@@ -126,11 +128,12 @@ class User {
             }
         }
         $c->setIdent($this->ident);
-        $url = $c -> collegamenti[$request];
+        $url = $c->collegamenti[$request];
 
         return $this->sendRequest($url, $isPost, $request);
     }
 
 
 }
+
 ?>
