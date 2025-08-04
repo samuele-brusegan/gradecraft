@@ -1,0 +1,15 @@
+- [x] Login
+- [ ] Grades
+- [ ] Subjects
+- [ ] Status
+- [ ] Lessons
+- [ ] Card
+- [ ] Bacheca (noticeboard)
+- [ ] Agenda
+- [ ] Overview
+- [ ] Assenze
+- [ ] Documents
+- [ ] Calendar
+- [ ] Libri
+- [ ] Periodi
+- [ ] Note
