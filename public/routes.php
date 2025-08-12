@@ -12,4 +12,4 @@ $router->add('/grades'  , 'Controller', 'grades');
 
 // === API ===
 $router->add('/api'     , 'ApiController', 'classeviva');
-$router->add('/api'     , 'ApiController', 'classevivaLogin');
+$router->add('/login'   , 'ApiController', 'login');

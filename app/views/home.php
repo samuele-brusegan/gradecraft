@@ -5,6 +5,9 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 
+global $error;
+global $loginResponse;
+
 ?>
 
 
@@ -19,28 +22,45 @@
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js" integrity="sha384-RuyvpeZCxMJCqVUGFI0Do1mQrods/hhxYlcVfGPOfQtPJh0JCw12tUAZ/Mv10S7D" crossorigin="anonymous"></script>
     </head>
     <body>
-        <div class="z-5 p-3 m-3" style="background: #BBB; position: relative;">
-            <button class="btn btn-danger" style="position: absolute; right: 10px; top: 10px;">X</button>
+        <div class="z-5 p-3 m-3 col-5" style="background: #BBB; position: relative; border-radius: 1rem" id="cvv_sync_form">
+            <button class="btn btn-danger" style="position: absolute; right: 10px; top: 10px; aspect-ratio: 1; border-radius: 50%" id="close_cvv_sync_form">X</button>
             <h3>Vuoi effettuare il Sync con classeviva?</h3>
-            <form action="<?=$_SERVER['PHP_SELF']?>">
-                <label>
-                    <span>Email</span>
-                    <input type="text" name="email" autocomplete="email">
-                </label>
-                <label>
-                    <span>Password</span>
-                    <input type="password" name="password" autocomplete="current-password">
-                </label>
-                <input type="submit" value="Login">
-                <input type="hidden" name="action" value="login">
+            <h5>Puoi sempre farlo in un secondo momento</h5>
+
+            <form action="/login" method="post">
+                <div class="mb-3">
+                    <label for="exampleInputEmail1" class="form-label">Email address</label>
+                    <input type="email" autocomplete="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="usr">
+                    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                </div>
+                <div class="mb-3">
+                    <label for="exampleInputPassword1" class="form-label">Password</label>
+                    <input autocomplete="current-password" type="password" class="form-control" id="exampleInputPassword1" name="pwd">
+                </div>
+                <div class="col-12 d-flex justify-content-center align-items-center">
+                    <button type="submit" class="btn btn-primary col-2">Submit</button>
+                </div>
             </form>
+            <script>
+                document.getElementById('close_cvv_sync_form').addEventListener('click', () => {
+                    document.getElementById('cvv_sync_form').classList.add('hidden');
+                });
+            </script>
+        </div>
+
+        <div>
+            <?php
+                if (isset($error))         echo "<h1>ERROR: $error</h1>";
+                if (isset($loginResponse)) echo "LoginResponse:" . $loginResponse;
+            ?>
         </div>
 
         <div style="position: absolute; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; background: #000;">
-            <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/">home        </a>
             <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/grades">Grades</a>
+            <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/">home        </a>
             <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/">Settings    </a>
         </div>
 
     </body>
+
 </html>

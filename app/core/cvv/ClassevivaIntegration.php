@@ -9,8 +9,8 @@ namespace cvv;
 
 include_once 'User.php';
 include_once 'collegamenti.php';
-$c = new Collegamenti();
-session_start();
+//$c = new Collegamenti();
+$c = \CVV_URLS;
 
 class CvvIntegration {
     private $usr;
@@ -33,8 +33,8 @@ class CvvIntegration {
                 $this->usr = new User($uid, $pwd);
                 $this->usr->token = $_SESSION['classeviva_auth_token'];
                 $this->usr->ident = $_SESSION['classeviva_ident'];
-                $this->usr->uid = $_SESSION['classeviva_username'];
-                $this->usr->pwd = $_SESSION['classeviva_password'];
+                $this->usr->uid   = $_SESSION['classeviva_username'];
+                $this->usr->pwd   = $_SESSION['classeviva_password'];
                 $this->usr->expDt = $_SESSION['classeviva_session_expiration_date'];
                 $this->usr->reqDt = $_SESSION['classeviva_session_request_date'];
                 $this->usr->is_logged_in = true;
@@ -62,7 +62,10 @@ class CvvIntegration {
         $pwd = $_SESSION['classeviva_password'] ?? null;
 
         $this->usr = new User($ident, $pwd);
+        $this->usr->firstName = $firstName;
+        $this->usr->lastName = $lastName;
         $this->usr->token = $token;
+        $this->usr->tokenAP = $tokenAP;
         $this->usr->ident = $ident;
         $this->usr->uid = $ident;
         $this->usr->pwd = $pwd;
@@ -102,6 +105,8 @@ class CvvIntegration {
         //print_r($this -> usr);
         $_SESSION['classeviva_session_expiration_date'] = $this->usr->expDt;
         $_SESSION['classeviva_session_request_date'] = $this->usr->reqDt;
+        $_SESSION['classeviva_first_name'] = $this->usr->firstName;
+        $_SESSION['classeviva_last_name'] = $this->usr->lastName;
         return $resp;
     }
     public function getGrades() {
@@ -129,9 +134,24 @@ class CvvIntegration {
         return $this->usr->getTicket();
     }
 
+    /**
+     * Handles a generic query to interact with a specific API endpoint.
+     *
+     * Ensures that a user is authenticated before proceeding. If the user is not logged in,
+     * an error is returned. If the requested API is invalid or not found, an appropriate error
+     * and a list of available APIs are returned. Otherwise, the query is delegated to the user's
+     * genericQuery method.
+     *
+     * @param string $request The API request path being called.
+     * @param mixed|null $extraInput Additional input data for the query, if applicable.
+     * @param bool $isPost Indicates if the query should be executed as a POST request.
+     * @return array The result of the query or an array containing error details.
+     */
     public function genericQuery($request, $extraInput = null, $isPost = false): array {
         //Dev'esistere un utente
         global $c;
+
+
         if ($this->usr == null) return ["error" => 'NO_USER', "message" => "Prima di chiamare un API (diversa da login) devi loggarti.", "instr" => "Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
         //Restituisco
 //        echo $c->collegamenti[$request];

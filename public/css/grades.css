@@ -1,0 +1,30 @@
+/*
+ * Copyright (c) 2025. Brusegan Samuele, Davanzo Andrea
+ * Questo file fa parte di GradeCraft ed è rilasciato
+ * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
+ */
+
+.grade {
+    background: var(--card-color);
+    border-radius: 1rem;
+    padding: 0.5em;
+    margin: 0.5em;
+    color: var(--text-color);
+
+    & > .value {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        width: 4em;
+    }
+}
+
+:root {
+    --grade-green: #4caf50;
+    --grade-yellow: #ffc107;
+    --grade-red: #f44336;
+    --grade-blue: #2196f3;
+    --grade-gray: #969696;
+}

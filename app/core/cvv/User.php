@@ -24,6 +24,9 @@ class User {
     public $last_login_response = null;
     public string $expDt;
     public string $reqDt;
+    public string $firstName;
+    public string $lastName;
+    public string $tokenAP;
 
 
     /**
@@ -64,7 +67,7 @@ class User {
             global $methods;
             if ($request != null) {
                 foreach ($methods as $key => $value) {
-                    if ($value['url'] == $request && isset($value['particularDataParse']) && $value['particularDataParse'] == 'PDF') {
+                    if (isset($value['url']) && $value['url'] == $request && isset($value['particularDataParse']) && $value['particularDataParse'] == 'PDF') {
                         return ["pdfData" => $response];
                     }
                 }
@@ -110,6 +113,8 @@ class User {
                 //print_r($data);
                 $this->expDt = $data['expire'];
                 $this->reqDt = $data['release'];
+                $this->firstName = $data['firstName'];
+                $this->lastName = $data['lastName'];
 
 
                 $this->is_logged_in = true;
