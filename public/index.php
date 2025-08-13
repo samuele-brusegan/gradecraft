@@ -26,7 +26,7 @@ require_once BASE_PATH . '/app/controllers/ApiController.php';
 checkSessionExpiration();
 
 
-// Ricreo l'env di Cvv
+// Ricreo l'ambiente di Cvv
 const CVV_API  = new CvvIntegration(); //Req. PHP 8.1
 define("USR", CVV_API->loadUser());
 
@@ -42,7 +42,7 @@ $url = $_SERVER['REQUEST_URI'];
 $router->dispatch($url);
 ?>
 
-<script>
+<!--<script>
     // Inizializza il database all'avvio dell'applicazione
     try {
         await dbService.open();
@@ -50,4 +50,4 @@ $router->dispatch($url);
     } catch (error) {
         console.log(`Errore nell'inizializzazione del database: ${error.message}`, 'error');
     }
-</script>
+</script>-->

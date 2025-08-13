@@ -7,9 +7,11 @@
 
 namespace cvv;
 
+use const CVV_URLS;
+
 include_once 'collegamenti.php';
 include_once 'apiMethods.php';
-$c = new Collegamenti();
+// $c = \CVV_URLS;
 
 class User {
     //--------------
@@ -79,7 +81,7 @@ class User {
     }
 
     public function login(): string|false {
-        global $c;
+        $c = CVV_URLS;
         $url = $c->collegamenti['login'];
         $headers = [
             'User-Agent: ' . $this->user_agent,
@@ -137,7 +139,7 @@ class User {
 
     public function genericQuery($request, $extraInput = null, $isPost = false) {
         if (!$this->is_logged_in) return ["error" => "NOT_LOGGED_IN", "message" => "Prima di chiamare un API (diversa da login) devi autenticarti. Contattare il dev se vedete questo errore", "instr" => "Per autenticarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
-        global $c;
+        $c = CVV_URLS;
         if ($extraInput != null) {
             foreach ($extraInput as $key => $value) {
                 $c->setGeneric($key, $value);

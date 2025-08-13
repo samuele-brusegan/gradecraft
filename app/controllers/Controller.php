@@ -53,7 +53,6 @@ class Controller {
             'cvvArrKey' => $cvvArrKey,
             'isPost' => $requestMethod == "POST",
         ];
-        $response = $apiCtrl->classeviva($data, false, true);
-        return $response;
+        return $apiCtrl->classeviva($data, false, true);
     }
 }

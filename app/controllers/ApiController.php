@@ -13,9 +13,9 @@ class ApiController {
         if ($data != "") $body = $data;
 
         $cvvApi = CVV_API;
-        $user = USR;
+        // $user = USR;
 
-        $resp = ["status" => "000", "message" => "API call not started (Commented row?)", "error" => "1"];
+        // $resp = ["status" => "000", "message" => "API call not started (Commented row?)", "error" => "1"];
 
         if ($isLogin) {
             $resp = $cvvApi->login();
@@ -80,7 +80,7 @@ class ApiController {
                 $cvvApi = CVV_API;
                 $cvvApi->createUser($usr, $pwd);
                 $result = $cvvApi->login();
-                $loginResponse = $result;
+                // $loginResponse = $result;
                 echo json_encode($result);
                 header('Location: /');
             }

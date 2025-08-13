@@ -4,7 +4,7 @@
  * Questo file fa parte di GradeCraft ed è rilasciato
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
-if (!isset($grades)) { $grades = []; }
+if (!isset($grades)) { $grades = ['error' => '']; }
 if ( isset($grades['error'])) { echo $grades['error']; exit; }
 
 function printGrade(mixed $grade): void {
@@ -45,7 +45,7 @@ function printGrade(mixed $grade): void {
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>GradeCraft - Grades</title>
         <?php require BASE_PATH . '/public/head.php';?>
-        <link rel="stylesheet" href="css/grades.css">
+        <link rel="stylesheet" href="<?=URL_PATH?>css/grades.css">
     </head>
     <style>
         .media_container {
@@ -72,7 +72,7 @@ function printGrade(mixed $grade): void {
         <div class="container">
             <?php
             if (!isset($_SESSION['classeviva_auth_token']) || $_SESSION['classeviva_auth_token'] == "" || $_SESSION['classeviva_auth_token'] == null) {
-                echo "Non sei loggato. <a href='/'>torna alla home</a>";
+                echo "Non sei loggato. <a href='/'>Torna alla home</a>";
                 exit;
             }
             ?>
@@ -210,7 +210,7 @@ function printGrade(mixed $grade): void {
                 };
 
                 // Inizializza il grafico
-                let gradeChart = new Chart( document.getElementById(id), config );
+                /*let gradeChart = */new Chart( document.getElementById(id), config );
             }
 
             show('statGenerale', getAllGrades())

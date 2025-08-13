@@ -12,7 +12,7 @@ use const CVV_URLS;
 include_once 'User.php';
 include_once 'collegamenti.php';
 //$c = new Collegamenti();
-$c = CVV_URLS;
+// $c = CVV_URLS;
 
 class CvvIntegration {
     private User $usr;
@@ -52,34 +52,39 @@ class CvvIntegration {
         }
         return false;
     }
-    public function buildUser($lr): User|bool {
-        //se c'è un utente in sessione
-        //print_r($lr);
+// --Commented out by Inspection START (13/08/25, 14:03):
+//    public function buildUser($loginResponse): User|bool {
+//        //se c'è un utente in sessione
+//        //print_r($lr);
+//
+//        $ident = $loginResponse['ident'];
+//        $firstName = $loginResponse['firstName'];
+//        $lastName = $loginResponse['lastName'];
+//        $token = $loginResponse['token'];
+//        $tokenAP = $loginResponse['tokenAP'];
+//        $expire = $loginResponse['expire'];
+//        $release = $loginResponse['release'];
+//        $pwd = $_SESSION['classeviva_password'] ?? null;
+//
+//        $this->usr = new User($ident, $pwd);
+//        $this->usr->firstName = $firstName;
+//        $this->usr->lastName = $lastName;
+//        $this->usr->token = $token;
+//        $this->usr->tokenAP = $tokenAP;
+//        $this->usr->ident = $ident;
+//        $this->usr->uid = $ident;
+//        $this->usr->pwd = $pwd;
+//        $this->usr->expDt = $expire;
+//        $this->usr->reqDt = $release;
+//        $this->usr->is_logged_in = true;
+//        return $this->usr;
+//    }
+// --Commented out by Inspection STOP (13/08/25, 14:03)
 
-        $ident = $lr['ident'];
-        $firstName = $lr['firstName'];
-        $lastName = $lr['lastName'];
-        $token = $lr['token'];
-        $tokenAP = $lr['tokenAP'];
-        $expire = $lr['expire'];
-        $release = $lr['release'];
-        $pwd = $_SESSION['classeviva_password'] ?? null;
-
-        $this->usr = new User($ident, $pwd);
-        $this->usr->firstName = $firstName;
-        $this->usr->lastName = $lastName;
-        $this->usr->token = $token;
-        $this->usr->tokenAP = $tokenAP;
-        $this->usr->ident = $ident;
-        $this->usr->uid = $ident;
-        $this->usr->pwd = $pwd;
-        $this->usr->expDt = $expire;
-        $this->usr->reqDt = $release;
-        $this->usr->is_logged_in = true;
-        return $this->usr;
-    }
-    public function login() {
+    public function login(): bool|array|string
+    {
         //Dev'esistere un utente da loggare
+        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ($this->usr == null) return false;
 
         //Verifico che il token non sia scaduto
@@ -113,30 +118,6 @@ class CvvIntegration {
         $_SESSION['classeviva_last_name'] = $this->usr->lastName;
         return $resp;
     }
-    public function getGrades() {
-        //Dev'esistere un utente
-        if ($this->usr == null) return false;
-        //Restituisco
-        return $this->usr->getVoti();
-    }
-    public function getSubjects() {
-        //Dev'esistere un utente
-        if ($this->usr == null) return false;
-        //Restituisco
-        return $this->usr->getSubjects();
-    }
-    public function getStatus() {
-        //Dev'esistere un utente
-        if ($this->usr == null) return false;
-        //Restituisco
-        return $this->usr->getStatus();
-    }
-    public function getTicket() {
-        //Dev'esistere un utente
-        if ($this->usr == null) return false;
-        //Restituisco
-        return $this->usr->getTicket();
-    }
 
     /**
      * Handles a generic query to interact with a specific API endpoint.
@@ -153,9 +134,10 @@ class CvvIntegration {
      */
     public function genericQuery(string $request, mixed $extraInput = null, bool $isPost = false): array {
         //Dev'esistere un utente
-        global $c;
-
-
+        $c = CVV_URLS;
+        
+        
+        /** @noinspection PhpConditionAlreadyCheckedInspection */
         if ($this->usr == null) return ["error" => 'NO_USER', "message" => "Prima di chiamare un API (diversa da login) devi loggarti.", "instr" => "Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
         //Restituisco
 //        echo $c->collegamenti[$request];
