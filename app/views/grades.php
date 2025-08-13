@@ -4,8 +4,8 @@
  * Questo file fa parte di GradeCraft ed è rilasciato
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
-
 if (!isset($grades)) { $grades = []; }
+if ( isset($grades['error'])) { echo $grades['error']; exit; }
 
 function printGrade(mixed $grade): void {
 //    if ($grade['noAverage'] == "") return;
@@ -20,7 +20,7 @@ function printGrade(mixed $grade): void {
             $color = "var(--grade-red)";
         }
     }
-    if (!isset($color)) $color = "var(--grade-gray)";
+//    if (!isset($color)) $color = "var(--grade-gray)";
     ?>
     <div class="grade" data-grade="<?=$grade['decimalValue']?>" data-date="<?=$grade['evtDate']?>" data-period="<?=$grade['periodPos']?>">
         <?=$grade['subjectDesc']?>
@@ -70,6 +70,12 @@ function printGrade(mixed $grade): void {
     </style>
     <body>
         <div class="container">
+            <?php
+            if (!isset($_SESSION['classeviva_auth_token']) || $_SESSION['classeviva_auth_token'] == "" || $_SESSION['classeviva_auth_token'] == null) {
+                echo "Non sei loggato. <a href='/'>torna alla home</a>";
+                exit;
+            }
+            ?>
             <h3>Buongiorno <b><?=ucwords(strtolower($_SESSION['classeviva_first_name']))?></b>!</h3>
 
             <div class="media_container">
@@ -124,6 +130,7 @@ function printGrade(mixed $grade): void {
             ?>
         </div>
     </body>
+    <!--suppress JSUnresolvedReference -->
     <script>
 
         function showStat() {
@@ -132,7 +139,7 @@ function printGrade(mixed $grade): void {
             function getAllGrades(){
                 let grades = [];
                 let gradesDom = document.querySelectorAll(`.grade`);
-                gradesDom.forEach((grade, index) => {
+                gradesDom.forEach((grade) => {
                     grade.getAttribute('data-grade') && grades.push(
                         parseFloat(grade.getAttribute('data-grade'))
                     )
@@ -142,7 +149,7 @@ function printGrade(mixed $grade): void {
             function getGradesPerPeriod(period){
                 let grades = [];
                 let gradesDom = document.querySelectorAll(`.grade[data-period="${period}"]`);
-                gradesDom.forEach((grade, index) => {
+                gradesDom.forEach((grade) => {
                     grade.getAttribute('data-grade') && grades.push(
                         parseFloat(grade.getAttribute('data-grade'))
                     )
@@ -218,7 +225,7 @@ function printGrade(mixed $grade): void {
                 // --- Dati di esempio: un array di voti ---
                 let grades = [];
                 let gradesDom = document.querySelectorAll(`.grade`);
-                gradesDom.forEach((grade, index) => {
+                gradesDom.forEach((grade) => {
                     grade.getAttribute('data-grade') && grades.push(
                         parseFloat(grade.getAttribute('data-grade'))
                     )
@@ -232,7 +239,7 @@ function printGrade(mixed $grade): void {
                 let canvas = document.getElementById('mediaPeriodo' + period);
                 let grades = [];
                 let gradesDom = document.querySelectorAll(`.grade[data-period="${period}"]`);
-                gradesDom.forEach((grade, index) => {
+                gradesDom.forEach((grade) => {
                     grade.getAttribute('data-grade') && grades.push(
                         parseFloat(grade.getAttribute('data-grade'))
                     )

@@ -8,7 +8,7 @@
 include_once BASE_PATH . '/app/core/cvv/apiMethods.php';
 
 class Controller {
-    public function index() {
+    public function index(): void {
         // 1. Chiede al Model di ottenere i dati
         // $prodotti = Prodotto::findAll();
 
@@ -16,7 +16,7 @@ class Controller {
         require_once BASE_PATH . '/app/views/home.php';
     }
 
-    public function grades() {
+    public function grades(): void {
 
         try {
             $rq = "get_grades";

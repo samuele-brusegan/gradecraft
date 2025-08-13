@@ -21,7 +21,7 @@ class User {
     public bool $is_logged_in = false;
     private string $user_agent = 'CVVS/std/4.1.7 Android/10';
     private string $api_key = 'Tg1NWEwNGIgIC0K';
-    public $last_login_response = null;
+    public mixed $last_login_response = null;
     public string $expDt;
     public string $reqDt;
     public string $firstName;
@@ -66,7 +66,7 @@ class User {
 
             global $methods;
             if ($request != null) {
-                foreach ($methods as $key => $value) {
+                foreach ($methods as $value) {
                     if (isset($value['url']) && $value['url'] == $request && isset($value['particularDataParse']) && $value['particularDataParse'] == 'PDF') {
                         return ["pdfData" => $response];
                     }
@@ -98,8 +98,19 @@ class User {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($response === false) {
+            echo "<pre>";
+            echo "cURL error: <br>";
+            echo "EFFECTIVE_URL: " . curl_getinfo($ch, CURLINFO_EFFECTIVE_URL) . "<br>";
+            echo "RESPONSE_CODE: " . curl_getinfo($ch, CURLINFO_RESPONSE_CODE) . "<br>";
+            echo "ERROR_NUMBER : " . curl_errno($ch) . "<br>";
+            echo "ERROR_VERBOSE: " . curl_error($ch) . "<br>";
+            echo "</pre>";
+        }
         curl_close($ch);
         $this->last_login_response = [
+            'url' => $url,
             'httpcode' => $httpCode,
             'raw' => $response,
             'decoded' => json_decode($response, true)
@@ -121,7 +132,7 @@ class User {
                 return json_encode($data);
             }
         }
-        return false;
+        return json_encode($this->last_login_response);
     }
 
     public function genericQuery($request, $extraInput = null, $isPost = false) {

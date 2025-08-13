@@ -22,7 +22,7 @@ global $loginResponse;
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js" integrity="sha384-RuyvpeZCxMJCqVUGFI0Do1mQrods/hhxYlcVfGPOfQtPJh0JCw12tUAZ/Mv10S7D" crossorigin="anonymous"></script>
     </head>
     <body>
-        <div class="z-5 p-3 m-3 col-5" style="background: #BBB; position: relative; border-radius: 1rem" id="cvv_sync_form">
+        <div class="z-5 p-3 m-3 col-md-5 col-10" style="background: #BBB; position: relative; border-radius: 1rem" id="cvv_sync_form">
             <button class="btn btn-danger" style="position: absolute; right: 10px; top: 10px; aspect-ratio: 1; border-radius: 50%" id="close_cvv_sync_form">X</button>
             <h3>Vuoi effettuare il Sync con classeviva?</h3>
             <h5>Puoi sempre farlo in un secondo momento</h5>
@@ -30,7 +30,7 @@ global $loginResponse;
             <form action="/login" method="post">
                 <div class="mb-3">
                     <label for="exampleInputEmail1" class="form-label">Email address</label>
-                    <input type="email" autocomplete="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="usr">
+                    <input type="text" autocomplete="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="usr">
                     <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
                 </div>
                 <div class="mb-3">

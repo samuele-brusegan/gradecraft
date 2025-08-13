@@ -22,9 +22,9 @@ class Collegamenti {
     private string $pubId = "";
     private string $eventCode = "";
     private string $year = "";
-    private $document_id;
-    private $elementId;
-    private $noteType;
+    private string $document_id;
+    private string $elementId;
+    private string $noteType;
 
     public function __construct() {
         $this->setValues();

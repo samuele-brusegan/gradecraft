@@ -23,7 +23,34 @@ class ApiController {
             $resp = $cvvApi->genericQuery($body['request'], $body['extraInput'], $body['isPost']);
         }
 
-        if (isset($resp['error'])) {
+
+        if ($return) {
+            if (isset($resp['error'])) {
+                http_response_code(401); // Unauthorized o altro errore
+                return $resp;
+            } else {
+                http_response_code(200);
+                if ($body['cvvArrKey'] != "" && $body['cvvArrKey'] != null && isset($resp[$body['cvvArrKey']])) {
+                    return $resp[$body['cvvArrKey']];
+                } else {
+                    return $resp;
+                }
+            }
+        } else {
+            if (isset($resp['error'])) {
+                http_response_code(401); // Unauthorized o altro errore
+                echo json_encode($resp);
+            } else {
+                http_response_code(200);
+                if ($body['cvvArrKey'] != "" && $body['cvvArrKey'] != null && isset($resp[$body['cvvArrKey']])) {
+                    echo json_encode($resp[$body['cvvArrKey']]);
+                } else {
+                    echo json_encode($resp);
+                }
+            }
+        }
+        return null;
+        /*if (isset($resp['error'])) {
             http_response_code(401); // Unauthorized o altro errore
             if ($return) return $resp; else echo json_encode($resp);
         } else {
@@ -34,7 +61,7 @@ class ApiController {
             } else {
                 if ($return) return $resp; else echo json_encode($resp);
             }
-        }
+        }*/
     }
 
     public function login(): void {
@@ -55,7 +82,7 @@ class ApiController {
                 $result = $cvvApi->login();
                 $loginResponse = $result;
                 echo json_encode($result);
-                require_once BASE_PATH . '/app/views/home.php';
+                header('Location: /');
             }
         }
     }

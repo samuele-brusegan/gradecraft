@@ -7,13 +7,15 @@
 
 namespace cvv;
 
+use const CVV_URLS;
+
 include_once 'User.php';
 include_once 'collegamenti.php';
 //$c = new Collegamenti();
-$c = \CVV_URLS;
+$c = CVV_URLS;
 
 class CvvIntegration {
-    private $usr;
+    private User $usr;
 
     public function __construct() {}
     public function createUser($username, $password): User {
@@ -23,30 +25,32 @@ class CvvIntegration {
     }
     public function loadUser(): User|bool {
         //se c'è un utente in sessione
+//        echo "<pre>"; print_r($_SESSION); echo "</pre>";
+        
         if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username']))) {
             $uid = $_SESSION['classeviva_username'];
             $pwd = $_SESSION['classeviva_password'];
 
             //Se la sessione non è expired
-            if (date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date']) {
+            if (isset($_SESSION['classeviva_session_expiration_date'])) {
+                if (date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date']) {
 
-                $this->usr = new User($uid, $pwd);
-                $this->usr->token = $_SESSION['classeviva_auth_token'];
-                $this->usr->ident = $_SESSION['classeviva_ident'];
-                $this->usr->uid   = $_SESSION['classeviva_username'];
-                $this->usr->pwd   = $_SESSION['classeviva_password'];
-                $this->usr->expDt = $_SESSION['classeviva_session_expiration_date'];
-                $this->usr->reqDt = $_SESSION['classeviva_session_request_date'];
-                $this->usr->is_logged_in = true;
-                return $this->usr;
-            } else {
-                $this->usr = $this->createUser($uid, $pwd);
-                $this->login(); // Passa l'ident al metodo di login
+                    $this->usr = new User($uid, $pwd);
+                    $this->usr->token = $_SESSION['classeviva_auth_token'];
+                    $this->usr->ident = $_SESSION['classeviva_ident'];
+                    $this->usr->uid = $_SESSION['classeviva_username'];
+                    $this->usr->pwd = $_SESSION['classeviva_password'];
+                    $this->usr->expDt = $_SESSION['classeviva_session_expiration_date'];
+                    $this->usr->reqDt = $_SESSION['classeviva_session_request_date'];
+                    $this->usr->is_logged_in = true;
+                } else {
+                    $this->usr = $this->createUser($uid, $pwd);
+                    $this->login(); // Passa l'ident al metodo di login
+                }
                 return $this->usr;
             }
-        } else {
-            return false;
         }
+        return false;
     }
     public function buildUser($lr): User|bool {
         //se c'è un utente in sessione
@@ -147,7 +151,7 @@ class CvvIntegration {
      * @param bool $isPost Indicates if the query should be executed as a POST request.
      * @return array The result of the query or an array containing error details.
      */
-    public function genericQuery($request, $extraInput = null, $isPost = false): array {
+    public function genericQuery(string $request, mixed $extraInput = null, bool $isPost = false): array {
         //Dev'esistere un utente
         global $c;
 
