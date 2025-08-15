@@ -6,10 +6,14 @@
  */
 global $router;
 
-// === Pagine ===
-$router->add('/'        , 'Controller', 'index');
-$router->add('/grades'  , 'Controller', 'grades');
-
 // === API ===
 $router->add('/api'     , 'ApiController', 'classeviva');
 $router->add('/login'   , 'ApiController', 'login');
+
+// === Pagine ===
+$router->add('/'            , 'Controller', 'index');
+$router->add('/grades'      , 'Controller', 'grades');
+$router->add('/settings'    , 'Controller', 'settings');
+$router->add('/account'     , 'Controller', 'account');
+$router->add('/subjects'    , 'Controller', 'subjects');
+$router->add('/agenda'      , 'Controller', 'agenda');

@@ -17,6 +17,15 @@ function checkSessionExpiration(): void {
         if ($expirationDate < $currentDate && $requestDate < date(DATE_ATOM, time() - $reLoginOffest)) {
             echo "<pre>"; print_r(loginRequest()); echo "</pre>"; 
         }
+    } elseif (isset($_COOKIE['users']) && $_COOKIE['users'] != "") {
+
+        $users = json_decode($_COOKIE['users'], true);
+        $user = $users[0];
+
+        $_SESSION['classeviva_username'] = $user['username'];
+        $_SESSION['classeviva_password'] = $user['password'];
+
+        loginRequest();
     }
 }
 
@@ -33,6 +42,7 @@ function loginRequest(): mixed {
     $ch = curl_init(URL_PATH."/login");
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([$_SESSION['classeviva_username'], $_SESSION['classeviva_password']]));
     curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

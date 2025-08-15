@@ -4,11 +4,13 @@
  * Questo file fa parte di GradeCraft ed è rilasciato
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
+
+
+
 if (!isset($grades)) { $grades = ['error' => '']; }
-if ( isset($grades['error'])) { echo $grades['error']; exit; }
+if ( isset($grades['error'])) { echo "<pre>"; print_r($grades); echo "</pre>"; }
 
 function printGrade(mixed $grade): void {
-//    if ($grade['noAverage'] == "") return;
     if ($grade['color'] == "blue") {
         $color = "var(--grade-blue)";
     } else {
@@ -20,9 +22,8 @@ function printGrade(mixed $grade): void {
             $color = "var(--grade-red)";
         }
     }
-//    if (!isset($color)) $color = "var(--grade-gray)";
     ?>
-    <div class="grade" data-grade="<?=$grade['decimalValue']?>" data-date="<?=$grade['evtDate']?>" data-period="<?=$grade['periodPos']?>">
+    <div class="grade mb-2" data-grade="<?=$grade['decimalValue']?>" data-date="<?=$grade['evtDate']?>" data-period="<?=$grade['periodPos']?>">
         <?=$grade['subjectDesc']?>
         <div class="value" style="background: <?=$color?>;">
             <div><?=$grade['displayValue']?></div>
@@ -44,8 +45,8 @@ function printGrade(mixed $grade): void {
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>GradeCraft - Grades</title>
-        <?php require BASE_PATH . '/public/head.php';?>
-        <link rel="stylesheet" href="<?=URL_PATH?>css/grades.css">
+        <?php include COMMON_HTML_HEAD ?>
+        <link rel="stylesheet" href="<?=URL_PATH?>/css/grades.css">
     </head>
     <style>
         .media_container {
@@ -53,10 +54,16 @@ function printGrade(mixed $grade): void {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 4rem;
             background: #2a2a2a;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            & > div  {
+                width: 100%;
+                /*height: 400px;*/
+                /*padding-bottom: 15rem;*/
+                /*padding-top: 15rem;*/
+            }
         }
 
         h1 {
@@ -64,56 +71,67 @@ function printGrade(mixed $grade): void {
             margin-bottom: 1.5rem;
         }
 
+        .graph {
+            position: relative;
+            /*height: 20%;*/
+            width: 200px;
+            height: 200px;
+            margin: 20px;
+            /*margin-top: 100px;*/
+        }
+        .graph-2 {
+            position: relative;
+            /*height: 20%;*/
+            width:  calc(200px * 1.67);
+            height: calc(200px * 1.67);
+            margin: 20px;
+            /*margin-top: 100px;*/
+        }
+        @media only screen and (max-width: 768px) {
+            .graph-2 {
+                width:  calc(200px * 1);
+                height: calc(200px * 1);
+            }
+        }
         canvas {
-            border-radius: 50%; /* Rende l'area del canvas visivamente rotonda */
+            /*border-radius: 50%; !* Rende l'area del canvas visivamente rotonda *!*/
         }
     </style>
     <body>
         <div class="container">
             <?php
-            if (!isset($_SESSION['classeviva_auth_token']) || $_SESSION['classeviva_auth_token'] == "" || $_SESSION['classeviva_auth_token'] == null) {
-                echo "Non sei loggato. <a href='/'>Torna alla home</a>";
-                exit;
-            }
+            session_wall();
             ?>
             <h3>Buongiorno <b><?=ucwords(strtolower($_SESSION['classeviva_first_name']))?></b>!</h3>
 
-            <div class="media_container">
+            <div class="media_container mt-2">
                 <h1>Media Voti</h1>
-                <div class="d-flex flex-column flex-md-row justify-content-center justify-content-md-between" style="width: 100%;">
-                    <div class="std-div">
-                        Media generale
-                        <canvas id="mediaGenerale" width="200" height="200" style=""></canvas>
+                <div class="d-flex flex-column flex-md-row justify-content-center justify-content-md-between px-5 p-md-5">
+                    <div class="std-div flex-column flex-md-row">
+                        Anno intero
+                        <div class="graph-2"> <canvas id="mediaGenerale"></canvas> </div>
                     </div>
                     <div class="std-div flex-column">
-                        <div>
-                            Media periodo 1
-                            <canvas id="mediaPeriodo1" width="200" height="200"></canvas>
-                        </div>
-                        <div>
-                            Media periodo 3
-                            <canvas id="mediaPeriodo3" width="200" height="200"></canvas>
-                        </div>
+                        <div class="order-0">Periodo 1</div>
+                        <div class="order-1 graph"> <canvas id="mediaPeriodo1"></canvas> </div>
+                        <div class="order-2 order-md-last">Periodo 3</div>
+                        <div class="order-3 graph"> <canvas id="mediaPeriodo3"></canvas> </div>
                     </div>
                 </div>
             </div>
 
             <div class="media_container mt-2">
                 <h1>Stat. Voti</h1>
-                <div class="d-flex flex-column flex-md-row justify-content-center justify-content-md-between" style="width: 100%; height: 400px; padding-bottom: 15px;">
-                    <div class="std-div" style="position: relative; height: 200px; margin-top: 100px; width: calc(200px + 11em);">
-                        Anno Intero
-                        <canvas id="statGenerale" style=""></canvas>
+                <div class="d-flex flex-column flex-md-row justify-content-center justify-content-md-between px-5 p-md-5">
+                    <div class="std-div flex-column flex-md-row">
+                        Anno intero
+                        <div class="graph-2"> <canvas id="statGenerale"></canvas> </div>
                     </div>
                     <div class="std-div flex-column">
-                        <div class="h-50 mb-3">
-                            Periodo 1
-                            <canvas id="statPeriodo1"></canvas>
-                        </div>
-                        <div class="h-50 mt-2">
-                            Periodo 3
-                            <canvas id="statPeriodo3"></canvas>
-                        </div>
+                        <div class="order-0">Periodo 1</div>
+                        <div class="order-1 graph"> <canvas id="statPeriodo1"></canvas> </div>
+                        <div class="order-2 order-md-last">Periodo 3</div>
+                        <div class="order-3 graph"> <canvas id="statPeriodo3"></canvas> </div>
                     </div>
                 </div>
             </div>
@@ -125,16 +143,16 @@ function printGrade(mixed $grade): void {
                 });
                 foreach ($grades as $grade) {
                     printGrade($grade);
-                    echo "<br>";
                 }
             ?>
+            <?php include BASE_PATH."/public/commons/pagination.php"; ?>
         </div>
+        <?php include COMMON_HTML_FOOT ?>
     </body>
     <!--suppress JSUnresolvedReference -->
     <script>
 
         function showStat() {
-
 
             function getAllGrades(){
                 let grades = [];
@@ -177,6 +195,7 @@ function printGrade(mixed $grade): void {
                 const data = {
                     labels: ['Sufficienti', 'Quasi Sufficienti', 'Gravemente Insufficienti'],
                     datasets: [{
+                        borderColor: "#0000",
                         data: [sufficienti, quasiSufficienti, insufficienti],
                         backgroundColor: [
                             '#4caf50', // Verde
@@ -194,6 +213,7 @@ function printGrade(mixed $grade): void {
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        cutout: '70%',
                         plugins: {
                             legend: {
                                 display: false,
@@ -217,7 +237,6 @@ function printGrade(mixed $grade): void {
             show('statPeriodo1', getGradesPerPeriod(1))
             show('statPeriodo3', getGradesPerPeriod(3))
         }
-
         function showAvr() {
             function calcGeneralAvr(){
                 let canvas = document.getElementById('mediaGenerale');
@@ -249,58 +268,79 @@ function printGrade(mixed $grade): void {
                 let total = grades.reduce((sum, grade) => sum + grade, 0);
                 return [canvas, total / grades.length];
             }
-
-            // --- Funzione per ottenere il colore in base al voto ---
-            function getColor(value) {
+            const getChartColors = (value, total) => {
+                let gradeColor;
                 if (value >= 6) {
-                    return '#4caf50'; // Verde
-                } else if (value >= 5 && value < 6) {
-                    return '#ffc107'; // Giallo
+                    gradeColor = '#22c55e'; // Verde
+                } else if (value >= 5) {
+                    gradeColor = '#eab308'; // Giallo
                 } else {
-                    return '#f44336'; // Rosso
+                    gradeColor = '#ef4444'; // Rosso
                 }
-            }
+                const remainingColor = '#444'; // Grigio
+                return value === total ? [gradeColor] : [gradeColor, remainingColor];
+            };
 
-            // --- Funzione per disegnare la barra e il testo ---
-            function drawProgressBar(canvas, value) {
-                let averageGrade = value;
-                let ctx = canvas.getContext('2d');
-                let centerX = canvas.width / 2;
-                let centerY = canvas.height / 2;
-                let radius = 80;
-                let lineWidth = 12;
-                let maxVal = 10;
-                // Ottieni il colore in base al valore della media
-                const progressColor = getColor(value);
+            function drawProgressBar(canvas, average) {
+                const centerTextPlugin = {
+                    id: 'centerText',
+                    afterDraw: (chart) => {
+                        const { ctx, chartArea: { left, top, width, height } } = chart;
+                        const { averageGrade, backgroundColor } = chart.config.data.datasets[0];
 
-                // Pulisce l'intero canvas per il prossimo frame
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        const centerX = left + width / 2;
+                        const centerY = top + height / 2;
 
-                // --- Disegna il cerchio di sfondo ---
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
-                ctx.lineWidth = lineWidth;
-                ctx.strokeStyle = '#3a3a3a';
-                ctx.stroke();
+                        ctx.save();
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.font = '700 48px Inter, sans-serif';
+                        ctx.fillStyle = backgroundColor[0];
 
-                // --- Disegna la barra di progresso colorata ---
-                const startAngle = -0.5 * Math.PI; // L'angolo iniziale (ore 12)
-                const endAngle = startAngle + (value / maxVal) * (2 * Math.PI);
+                        ctx.fillText(averageGrade.toFixed(1), centerX, centerY);
+                        ctx.restore();
+                    }
+                };
 
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-                ctx.lineWidth = lineWidth;
-                ctx.strokeStyle = progressColor;
-                ctx.lineCap = 'round'; // Rende le estremità della linea arrotondate
-                ctx.stroke();
+                // Valore della media dei voti da visualizzare
+                // const averageGrade = average;
+                const averageGrade = average
+                const maxGrade = 10;
 
-                // --- Disegna il numero al centro ---
-                // Mostra il numero arrotondato a una cifra decimale
-                ctx.fillStyle = progressColor;
-                ctx.font = 'bold 3rem Arial';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(averageGrade.toFixed(1), centerX, centerY);
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            label: 'Dettagli Voti',
+                            data: [averageGrade, maxGrade - averageGrade],
+                            backgroundColor: getChartColors(averageGrade, maxGrade),
+                            borderColor: '#0000',
+                            // borderRadius: 15,
+                            hoverOffset: 0,
+                            averageGrade: averageGrade
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: false
+                                /*callbacks: {
+                                    label: (context) => {
+                                        let label = context.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed !== null) { label += context.parsed.toFixed(1); }
+                                        return label;
+                                    }
+                                }*/
+                            }
+                        }
+                    },
+                    plugins: [centerTextPlugin]
+                });
             }
 
             // Avvia il disegno con il valore della media
@@ -315,11 +355,89 @@ function printGrade(mixed $grade): void {
 
             }
         }
+        function paginate() {
+            function updatePageLimits() {
+                paginateStart = (paginateCurrentPage - 1) * paginatePerPage;
+                paginateEnd = paginateStart + paginatePerPage;
+            }
+            function updatePaginationButtons() {
+                nextPage.setAttribute("data-page", (paginateCurrentPage + 1) + "");
+                prevPage.setAttribute("data-page", (paginateCurrentPage - 1) + "");
+
+                paginationButtons.forEach((el) => {
+                    if (el.getAttribute("data-page") <= 0 || el.getAttribute("data-page") > pages || el.getAttribute("data-page") === paginateCurrentPage+"") {
+                        el.classList.add("disabled");
+                    } else {
+                        el.classList.remove("disabled");
+                    }
+                })
+                document.querySelectorAll('.pagination-buttons>div').forEach((el) => {
+                    el.textContent = paginateCurrentPage;
+                })
+            }
+            function updateHiddenGrades() {
+                grades.forEach((el) => {
+                    el.classList.add('hidden')
+                })
+
+                for (let i = paginateStart; i < paginateEnd; i++) {
+                    grades[i].classList.remove('hidden')
+                }
+            }
+            let grades = document.querySelectorAll('.grade');
+            let paginateCount = grades.length;
+            let paginatePerPage = 3;
+            let pages = Math.ceil(paginateCount / paginatePerPage);
+            let paginateCurrentPage = 1;
+            let paginateStart;
+            let paginateEnd;
+            let nextPage  = document.getElementById('next-page');
+            let prevPage  = document.getElementById('prev-page');
+            let firstPage = document.getElementById('frst-page');
+            let lastPage  = document.getElementById('last-page');
+            let paginationButtons = document.querySelectorAll('.pagination-buttons>.btn');
+
+            firstPage.setAttribute("data-page", 1 + "");
+            lastPage.setAttribute("data-page", pages + "");
+
+            updatePageLimits();
+            updatePaginationButtons();
+            updateHiddenGrades();
+
+            nextPage.addEventListener('click', () => {
+                paginateCurrentPage = Number( nextPage.getAttribute('data-page') );
+                console.log(paginateCurrentPage);
+                updatePaginationButtons();
+                updatePageLimits();
+                updateHiddenGrades()
+            })
+            prevPage.addEventListener('click', () => {
+                paginateCurrentPage = Number( prevPage.getAttribute('data-page') );
+                console.log(paginateCurrentPage);
+                updatePaginationButtons();
+                updatePageLimits();
+                updateHiddenGrades();
+            })
+            firstPage.addEventListener('click', () => {
+                paginateCurrentPage = 1;
+                updatePaginationButtons();
+                updatePageLimits();
+                updateHiddenGrades();
+            })
+            lastPage.addEventListener('click', () => {
+                paginateCurrentPage = pages;
+                updatePaginationButtons();
+                updatePageLimits();
+                updateHiddenGrades();
+            })
+
+        }
 
         //Calcolo la media dei voti
         document.addEventListener('DOMContentLoaded', () => {
             showAvr()
             showStat()
+            paginate();
         });
     </script>
 </html>

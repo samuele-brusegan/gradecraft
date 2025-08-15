@@ -15,7 +15,6 @@ class Controller {
         // 2. Passa i dati alla View per la visualizzazione
         require_once BASE_PATH . '/app/views/home.php';
     }
-
     public function grades(): void {
 
         try {
@@ -31,6 +30,56 @@ class Controller {
 
         require_once BASE_PATH . '/app/views/grades.php';
     }
+    public function settings(): void {
+        require_once BASE_PATH . '/app/views/settings.php';
+    }
+    public function subjects(): void {
+        try {
+            $rq = "subjects";
+            $response = $this->requestToApi($rq);
+        } catch (Exception $e) {
+            echo $e->getMessage();
+            $response = ["error" => "API_ERROR"];
+        }
+        require_once BASE_PATH . '/app/views/subjects.php';
+    }
+    public function agenda(): void {
+        try {
+            $rq = "agenda_da_a";
+
+            $date_from = "";
+            $date_to   = "";
+            if (isset($_POST['date_from']) && isset($_POST['date_to'])) {
+                $date_from = ["date" => $_POST['date_from']];
+                $date_to   = ["date" => $_POST['date_to']];
+            } else {
+                $date_from  = (array) new DateTime();
+                $date_to    = (array) new DateTime("now +1 month");
+            }
+
+            $date_from = $date_from['date'];
+            $date_to   = $date_to  ['date'];
+            $date_from = date("Ymd", strtotime($date_from));
+            $date_to  =  date("Ymd", strtotime($date_to));
+
+            $date_from = "20250301";
+            $date_to   = "20250401";
+
+
+            $response = $this->requestToApi($rq, [
+                "date_from" => $date_from,
+                "date_to"   => $date_to
+            ]);
+
+        } catch (Exception $e) {
+            echo $e->getMessage();
+            $response = ["error" => "API_ERROR"];
+        }
+        require_once BASE_PATH . '/app/views/agenda.php';
+    }
+    public function account(): void {
+        require_once BASE_PATH . '/app/views/account.php';
+    }
 
     /**
      * Makes an API call using the provided request key.
@@ -39,7 +88,7 @@ class Controller {
      * @return array Returns the API response as a string on success or false if the response cannot be retrieved.
      * @throws Exception If the HTTP response code differs from 200, throwing an exception with error details.
      */
-    private function requestToApi(string $rq): array {
+    private function requestToApi(string $rq, array $extraInput=[""]): array {
         global $methods;
         $apiCtrl = new ApiController();
         $method = $methods[$rq];
@@ -49,7 +98,7 @@ class Controller {
 
         $data = [
             'request' => $url,
-            'extraInput' => [""],
+            'extraInput' => $extraInput,
             'cvvArrKey' => $cvvArrKey,
             'isPost' => $requestMethod == "POST",
         ];

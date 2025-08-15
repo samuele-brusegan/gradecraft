@@ -8,6 +8,42 @@
 global $error;
 global $loginResponse;
 
+if (isset($_SESSION['classeviva_ident'])) {
+    echo "LOGGED IN";
+} else {
+    echo "NOT LOGGED IN";
+}
+
+function cvv_sync() {
+    ?>
+    <div class="z-5 p-4 m-3 col-md-5 col-10" style="background: var(--card-color); position: absolute; top: 2em; right: 10px; border-radius: 1rem; box-shadow: 0 10px 20px #0004" id="cvv_sync_form">
+        <button class="btn btn-danger" style="position: absolute; right: 10px; top: 10px; aspect-ratio: 1; border-radius: 50%" id="close_cvv_sync_form">X</button>
+        <h3>Vuoi effettuare il Sync con classeviva?</h3>
+        <h5>Puoi sempre farlo in un secondo momento</h5>
+
+        <form action="/login" method="post" data-bs-theme="dark">
+            <div class="mb-3">
+                <label for="inputUsername" class="form-label">Email address</label>
+                <input type="text" autocomplete="email" class="form-control" id="inputUsername" aria-describedby="emailHelp" name="usr">
+                <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+            </div>
+            <div class="mb-3">
+                <label for="inputPassword" class="form-label">Password</label>
+                <input autocomplete="current-password" type="password" class="form-control" id="inputPassword" name="pwd">
+            </div>
+            <div class="col-12 d-flex justify-content-center align-items-center">
+                <button type="submit" class="btn btn-primary col-md-2 col-6">Submit</button>
+            </div>
+        </form>
+        <script>
+            document.getElementById('close_cvv_sync_form').addEventListener('click', () => {
+                document.getElementById('cvv_sync_form').classList.add('hidden');
+            });
+        </script>
+    </div>
+    <?php
+}
+
 ?>
 
 
@@ -16,37 +52,67 @@ global $loginResponse;
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>GradeCraft - Home</title>
-        <?php include BASE_PATH . '/public/head.php'; ?>
-        <link  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-        <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.6/dist/js/bootstrap.min.js" integrity="sha384-RuyvpeZCxMJCqVUGFI0Do1mQrods/hhxYlcVfGPOfQtPJh0JCw12tUAZ/Mv10S7D" crossorigin="anonymous"></script>
+        <?php include COMMON_HTML_HEAD ?>
     </head>
-    <body>
-        <div class="z-5 p-3 m-3 col-md-5 col-10" style="background: #BBB; position: relative; border-radius: 1rem" id="cvv_sync_form">
-            <button class="btn btn-danger" style="position: absolute; right: 10px; top: 10px; aspect-ratio: 1; border-radius: 50%" id="close_cvv_sync_form">X</button>
-            <h3>Vuoi effettuare il Sync con classeviva?</h3>
-            <h5>Puoi sempre farlo in un secondo momento</h5>
+    <style>
+        .main-menu {
+            & > .main-menu-card {
+                display: flex;
+                justify-content: start;
+                align-items: center;
 
-            <form action="/login" method="post">
-                <div class="mb-3">
-                    <label for="exampleInputEmail1" class="form-label">Email address</label>
-                    <input type="text" autocomplete="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="usr">
-                    <div id="emailHelp" class="form-text">We'll never share your email with anyone else.</div>
+                background: var(--card-color);
+                border-radius: 1rem;
+                padding: 1rem;
+                margin-top: .7rem;
+
+                & > .name {
+                    padding-left: .7rem;
+                    font-size: 2rem;
+                }
+                & > img {
+                    border-radius: 50%;
+                    width: 70px;
+                    aspect-ratio: 1;
+                }
+            }
+            & > .main-menu-card[data-disabled="true"] {
+                opacity: .5;
+                cursor: not-allowed;
+            }
+        }
+    </style>
+    <body>
+        <?php (!isset($_SESSION['classeviva_ident']))?cvv_sync():'' ?>
+
+        <div class="container">
+
+            <div class="main-menu">
+                <div class="main-menu-card" data-href="/grades">
+                    <img src="https://brusegan.it/assets/placeholder.svg" alt="">
+                    <div class="name">Grades</div>
                 </div>
-                <div class="mb-3">
-                    <label for="exampleInputPassword1" class="form-label">Password</label>
-                    <input autocomplete="current-password" type="password" class="form-control" id="exampleInputPassword1" name="pwd">
+                <div class="main-menu-card" data-href="/subjects">
+                    <img src="https://brusegan.it/assets/placeholder.svg" alt="">
+                    <div class="name">Subjects</div>
                 </div>
-                <div class="col-12 d-flex justify-content-center align-items-center">
-                    <button type="submit" class="btn btn-primary col-2">Submit</button>
+                <div class="main-menu-card" data-href="/agenda">
+                    <img src="https://brusegan.it/assets/placeholder.svg" alt="">
+                    <div class="name">Agenda</div>
                 </div>
-            </form>
-            <script>
-                document.getElementById('close_cvv_sync_form').addEventListener('click', () => {
-                    document.getElementById('cvv_sync_form').classList.add('hidden');
-                });
-            </script>
+                <script>
+                    document.querySelectorAll('.main-menu-card').forEach(card => {
+                        card.addEventListener('click', () => {
+                            if (card.getAttribute('data-disabled') !== 'true') {
+                                window.location.href = card.getAttribute('data-href');
+                            }
+                        });
+                    });
+                </script>
+            </div>
+
         </div>
+
 
         <div>
             <?php
@@ -54,13 +120,7 @@ global $loginResponse;
                 if (isset($loginResponse)) echo "LoginResponse:" . $loginResponse;
             ?>
         </div>
-
-        <div style="position: absolute; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; background: #000;">
-            <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/grades">Grades</a>
-            <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/">home        </a>
-            <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/">Settings    </a>
-        </div>
-
+        <?php include COMMON_HTML_FOOT ?>
     </body>
 
 </html>

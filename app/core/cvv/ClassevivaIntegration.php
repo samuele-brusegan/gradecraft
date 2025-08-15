@@ -99,7 +99,13 @@ class CvvIntegration {
         if (isset($_SESSION['classeviva_auth_token']) && !$isExpired) {
             if ($_SESSION['classeviva_ident'] == $this->usr->uid || $_SESSION['classeviva_username'] == $this->usr->uid) {
                 $this->usr->token = $_SESSION['classeviva_auth_token'];
-                return array("status" => "602", "studentId" => $_SESSION['classeviva_ident'], "username" => $_SESSION['classeviva_username'], "expire" => $_SESSION['classeviva_session_expiration_date'], "request" => $_SESSION['classeviva_session_request_date']);
+                return [
+                    "status" => "602",
+                    "studentId" => $_SESSION['classeviva_ident'],
+                    "username" => $_SESSION['classeviva_username'],
+                    "expire" => $_SESSION['classeviva_session_expiration_date'],
+                    "request" => $_SESSION['classeviva_session_request_date']
+                ];
             }
         }
 
@@ -135,10 +141,14 @@ class CvvIntegration {
     public function genericQuery(string $request, mixed $extraInput = null, bool $isPost = false): array {
         //Dev'esistere un utente
         $c = CVV_URLS;
-        
-        
-        /** @noinspection PhpConditionAlreadyCheckedInspection */
-        if ($this->usr == null) return ["error" => 'NO_USER', "message" => "Prima di chiamare un API (diversa da login) devi loggarti.", "instr" => "Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
+
+        if (!isset($this->usr)) return [
+            "error" => 'NO_USER',
+            "message" => "Prima di chiamare un API (diversa da login) devi loggarti.",
+            "instr" => "Per loggarti, chiamare questo stesso file in POST con path = login, nel body passare username e password.",
+            "session" => $_SESSION
+        ];
+
         //Restituisco
 //        echo $c->collegamenti[$request];
         if (isset($c->collegamenti[$request])) {

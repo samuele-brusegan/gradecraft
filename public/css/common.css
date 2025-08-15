@@ -25,3 +25,11 @@ body {
     justify-content: center;
     align-items: center;
 }
+
+.pagination-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}

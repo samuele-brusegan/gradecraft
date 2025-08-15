@@ -134,6 +134,7 @@ class User {
                 return json_encode($data);
             }
         }
+        //Se ci sono problemi
         return json_encode($this->last_login_response);
     }
 
