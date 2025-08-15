@@ -124,7 +124,7 @@ class ApiController {
                 addLoginInCookies();
 
                 $loginResponse = $result;
-                echo json_encode($result);
+//                echo json_encode($result);
                 header('Location: /');
                 require_once BASE_PATH . '/app/views/home.php';
             }
