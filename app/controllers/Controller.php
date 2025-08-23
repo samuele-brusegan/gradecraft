@@ -10,10 +10,25 @@ include_once BASE_PATH . '/app/core/cvv/apiMethods.php';
 class Controller {
     public function index(): void {
         // 1. Chiede al Model di ottenere i dati
-        // $prodotti = Prodotto::findAll();
+        try {
+            $rq = "subjects";
+            $responseA = $this->requestToApi($rq);
+            $response['subjects'] = $responseA;
+        } catch (Exception $e) {
+            echo $e->getMessage();
+            $response = ["error" => "API_ERROR_SUBJECTS"];
+        }
+        try {
+            $rq = "get_grades";
+            $responseA = $this->requestToApi($rq);
+            $response['grades'] = $responseA;
+        } catch (Exception $e) {
+            echo $e->getMessage();
+            $response = ["error" => "API_ERROR_GRADES"];
+        }
 
-        // 2. Passa i dati alla View per la visualizzazione
-        require_once BASE_PATH . '/app/views/home.php';
+            // 2. Passa i dati alla View per la visualizzazione
+        require_once BASE_PATH . '/app/views/dashboard.php';
     }
     public function grades(): void {
 

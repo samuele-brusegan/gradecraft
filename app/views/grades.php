@@ -49,20 +49,54 @@ function printGrade(mixed $grade): void {
         <link rel="stylesheet" href="<?=URL_PATH?>/css/grades.css">
     </head>
     <style>
-        .media_container {
+        @media (max-width: 768px) {
+            .graph-2 {
+                /*width: 45%;*/
+                height: 60%;
+            }
+        }
+        @media (min-width: 768px) {
+            .graph-2 {
+                height: 100%;
+                width: 100%;
+            }
+        }
+
+        /*.media_container {
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 4rem;
-            background: #2a2a2a;
+            background: var(--card-color);
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             & > div  {
                 width: 100%;
-                /*height: 400px;*/
-                /*padding-bottom: 15rem;*/
-                /*padding-top: 15rem;*/
+                !*height: 400px;*!
+                !*padding-bottom: 15rem;*!
+                !*padding-top: 15rem;*!
+            }
+            & .graph {
+                height: 35%;
+            }
+        }*/
+        .my-card > .media_container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            /*padding: 0;*/
+            /*background: transparent;*/
+            /*box-shadow: none;*/
+
+            & > div {
+                height: 100%;
+            }
+
+            & .graph {
+                height: 35%;
             }
         }
 
@@ -71,40 +105,41 @@ function printGrade(mixed $grade): void {
             margin-bottom: 1.5rem;
         }
 
-        .graph {
+        /*.graph {
             position: relative;
-            /*height: 20%;*/
+            !*height: 20%;*!
             width: 200px;
             height: 200px;
             margin: 20px;
-            /*margin-top: 100px;*/
+            !*margin-top: 100px;*!
         }
         .graph-2 {
             position: relative;
-            /*height: 20%;*/
+            !*height: 20%;*!
             width:  calc(200px * 1.67);
             height: calc(200px * 1.67);
             margin: 20px;
-            /*margin-top: 100px;*/
+            !*margin-top: 100px;*!
         }
         @media only screen and (max-width: 768px) {
             .graph-2 {
                 width:  calc(200px * 1);
                 height: calc(200px * 1);
             }
-        }
+        }*/
+
         canvas {
             /*border-radius: 50%; !* Rende l'area del canvas visivamente rotonda *!*/
         }
     </style>
-    <body>
+    <body data-theme="<?=THEME?>">
         <div class="container">
             <?php
             session_wall();
             ?>
             <h3>Buongiorno <b><?=ucwords(strtolower($_SESSION['classeviva_first_name']))?></b>!</h3>
 
-            <div class="media_container mt-2">
+            <!--<div class="media_container mt-2">
                 <h1>Media Voti</h1>
                 <div class="d-flex flex-column flex-md-row justify-content-center justify-content-md-between px-5 p-md-5">
                     <div class="std-div flex-column flex-md-row">
@@ -118,9 +153,26 @@ function printGrade(mixed $grade): void {
                         <div class="order-3 graph"> <canvas id="mediaPeriodo3"></canvas> </div>
                     </div>
                 </div>
+            </div>-->
+            <div class="my-card" style="height: 40vh">
+                <div class="media_container mt-2">
+                    <!--<h1>Media Voti</h1>-->
+                    <div class="d-flex justify-content-between p-md-3 p-2" style="width: 100%">
+                        <div class="std-div flex-column flex-md-row">
+                            Anno intero
+                            <div class="graph-2"> <canvas id="mediaGenerale"></canvas> </div>
+                        </div>
+                        <div class="std-div flex-column justify-content-between">
+                            <div class="w-fit order-0">Periodo 1</div>
+                            <div class="w-fit order-1 graph"> <canvas id="mediaPeriodo1"></canvas> </div>
+                            <div class="w-fit order-2 order-last">Periodo 3</div>
+                            <div class="w-fit order-3 graph"> <canvas id="mediaPeriodo3"></canvas> </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="media_container mt-2">
+            <!--<div class="media_container mt-2">
                 <h1>Stat. Voti</h1>
                 <div class="d-flex flex-column flex-md-row justify-content-center justify-content-md-between px-5 p-md-5">
                     <div class="std-div flex-column flex-md-row">
@@ -132,6 +184,23 @@ function printGrade(mixed $grade): void {
                         <div class="order-1 graph"> <canvas id="statPeriodo1"></canvas> </div>
                         <div class="order-2 order-md-last">Periodo 3</div>
                         <div class="order-3 graph"> <canvas id="statPeriodo3"></canvas> </div>
+                    </div>
+                </div>
+            </div>-->
+            <div class="my-card" style="height: 40vh">
+                <div class="media_container mt-2">
+                    <!--<h1>Media Voti</h1>-->
+                    <div class="d-flex justify-content-between p-md-3 p-2" style="width: 100%">
+                        <div class="std-div flex-column flex-md-row">
+                            Anno intero
+                            <div class="graph-2"> <canvas id="statGenerale"></canvas> </div>
+                        </div>
+                        <div class="std-div flex-column justify-content-between">
+                            <div class="order-0">Periodo 1</div>
+                            <div class="order-1 graph"> <canvas id="statPeriodo1"></canvas> </div>
+                            <div class="order-2 order-last">Periodo 3</div>
+                            <div class="order-3 graph"> <canvas id="statPeriodo3"></canvas> </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -151,6 +220,40 @@ function printGrade(mixed $grade): void {
     </body>
     <!--suppress JSUnresolvedReference -->
     <script>
+
+        function hexToRgb(hex) {
+            var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        // Funzione per schiarire/scurire un colore HEX
+        // amount: un numero intero, positivo per schiarire, negativo per scurire
+        function changeHexColor(hex, amount) {
+            let rgb = hexToRgb(hex);
+
+            if (!rgb) {
+                console.error("Colore HEX non valido");
+                return null;
+            }
+
+            let { r, g, b } = rgb;
+
+            // Modifica i valori R, G, B
+            r = Math.min(255, Math.max(0, r + amount));
+            g = Math.min(255, Math.max(0, g + amount));
+            b = Math.min(255, Math.max(0, b + amount));
+
+            return rgbToHex(r, g, b);
+        }
+
 
         function showStat() {
 
@@ -212,7 +315,7 @@ function printGrade(mixed $grade): void {
                     data: data,
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: true,
                         cutout: '70%',
                         plugins: {
                             legend: {
@@ -277,7 +380,8 @@ function printGrade(mixed $grade): void {
                 } else {
                     gradeColor = '#ef4444'; // Rosso
                 }
-                const remainingColor = '#444'; // Grigio
+                let cardColor = window.getComputedStyle(document.querySelector("body")).getPropertyValue('--card-color');;
+                const remainingColor = changeHexColor(cardColor, -50) // Grigio
                 return value === total ? [gradeColor] : [gradeColor, remainingColor];
             };
 
@@ -294,7 +398,7 @@ function printGrade(mixed $grade): void {
                         ctx.save();
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.font = '700 48px Inter, sans-serif';
+                        ctx.font = '700 1.8rem Inter, sans-serif';
                         ctx.fillStyle = backgroundColor[0];
 
                         ctx.fillText(averageGrade.toFixed(1), centerX, centerY);

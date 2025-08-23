@@ -36,7 +36,7 @@ if ( isset($response['error'])) { echo "<pre>"; print_r($response); echo "</pre>
             width: 100%;
         }
     </style>
-    <body>
+    <body data-theme="<?=THEME?>">
         <div class="container">
             <?php
             session_wall();
@@ -80,7 +80,7 @@ if ( isset($response['error'])) { echo "<pre>"; print_r($response); echo "</pre>
                 },
                 headerToolbar: {
                     left: 'prev,next',
-                    center: 'title',
+                    // center: 'title',
                     right: 'timeGridDay,timeGridWeek,dayGridMonth,multiMonthYear'
                 },
                 businessHours: {

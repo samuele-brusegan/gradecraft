@@ -8,7 +8,7 @@
 if (!isset($response)) { $response = ['error' => '']; }
 if ( isset($response['error'])) { echo "<pre>"; print_r($response); echo "</pre>"; }
 
-function printSubject($subject) {
+function printSubject($subject): void {
     $id = $subject['id'];
     $name = $subject['description'];
     $order = $subject['order'];
@@ -51,7 +51,7 @@ function printSubject($subject) {
             padding: 10px;
         }
     </style>
-    <body>
+    <body data-theme="<?=THEME?>">
         <div class="container">
             <?php
             //        echo "<pre>"; print_r($response); echo "</pre>";

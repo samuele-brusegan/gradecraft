@@ -13,7 +13,7 @@
         <?php include COMMON_HTML_HEAD; ?>
         <title>Gradecraft - Account</title>
     </head>
-    <body>
+    <body data-theme="<?=THEME?>">
         <div class="container">
             <h1>Account</h1>
             <pre>

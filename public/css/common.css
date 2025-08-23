@@ -4,17 +4,23 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 
+:root {
+    --background-color: #FFF;
+    --text-color: #000;
+    --card-color: #DEDEDE;
+}
+:root[data-theme="dark"] {
+    --background-color: #000;
+    --text-color: #FFF;
+    --card-color: #353535;
+}
+
 .hidden {
     display: none;
 }
 body {
-    color: white;
+    color: var(--text-color);
     background: var(--background-color);
-}
-:root {
-    --background-color: #111;
-    --text-color: white;
-    --card-color: #353535;
 }
 .xdebug-error {
     color: black;
@@ -32,4 +38,11 @@ body {
     align-items: center;
     margin-top: 2rem;
     margin-bottom: 2rem;
+}
+.my-card {
+    margin: 1rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: var(--card-color);
+    color: var(--text-color);
 }

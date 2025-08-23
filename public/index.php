@@ -15,6 +15,8 @@ const URL_PATH = "https://gradecraft.test";
 const COMMON_HTML_HEAD = BASE_PATH . '/public/commons/head.php';
 const COMMON_HTML_FOOT = BASE_PATH . '/public/commons/bottom_navigation.php';
 
+const THEME = (0) ? 'light' : 'dark';
+
 // Includi i file necessari, a mano o con l'autoloader di Composer
 require_once BASE_PATH . '/app/core/Router.php';
 require_once BASE_PATH . '/public/functions.php';

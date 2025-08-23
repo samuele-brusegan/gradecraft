@@ -13,7 +13,7 @@
         <?php include COMMON_HTML_HEAD; ?>
         <title>GradeCraft - Settings</title>
     </head>
-    <body>
+    <body data-theme="<?=THEME?>">
         <div class="container" style="overflow: hidden;">
             <h1>Settings</h1>
             <?php

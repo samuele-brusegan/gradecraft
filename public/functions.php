@@ -50,5 +50,5 @@ function loginRequest(): mixed {
     if ($httpCode == 200) {
         return json_decode($response, true);
     }
-    return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "headers" => $headers, "body" => $response];
+    return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "headers" => $headers, "body" => $response, "stackTrace" => debug_backtrace()];
 }
