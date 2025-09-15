@@ -21,7 +21,7 @@ class Collegamenti {
     private string $materia = "";
     private string $pubId = "";
     private string $eventCode = "";
-    private string $year = "";
+    private string $year = "24";
     private string $document_id = "";
     private string $elementId = "";
     private string $noteType  = "";

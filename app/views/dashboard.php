@@ -22,6 +22,11 @@ if (!isset($response)){
     ];
 }
 
+if (isset($response['error'])) {
+    $error = $response['error'];
+    echo "<pre>"; print_r($response); echo "</pre>";
+}
+
 
 function cvv_sync() {
     ?>
@@ -74,6 +79,14 @@ function printSubject($subject): void {
     <?php
 }
 function printGrade(mixed $grade): void {
+
+    if (isset($error)) {
+        echo "<div class='alert alert-danger'>{$error}</div>";
+        return;
+    }
+
+    echo "<pre>"; print_r($grade); echo "</pre>";
+
     if ($grade['color'] == "blue") {
         $color = "var(--grade-blue)";
     } else {
@@ -86,19 +99,21 @@ function printGrade(mixed $grade): void {
         }
     }
     ?>
-    <div class="grade mb-2 hidden" data-grade="<?=$grade['decimalValue']?>" data-date="<?=$grade['evtDate']?>" data-period="<?=$grade['periodPos']?>">
-        <?=$grade['subjectDesc']?>
-        <div class="value" style="background: <?=$color?>;">
-            <div><?=$grade['displayValue']?></div>
+    <Grade class="grade mb-2 hidden" data-grade="<?=$grade['decimalValue']?>" data-date="<?=$grade['evtDate']?>" data-period="<?=$grade['periodPos']?>"></Grade>
+
+    <!--<div class="grade mb-2 hidden" data-grade="<?php /*=$grade['decimalValue']*/?>" data-date="<?php /*=$grade['evtDate']*/?>" data-period="<?php /*=$grade['periodPos']*/?>">
+        <?php /*=$grade['subjectDesc']*/?>
+        <div class="value" style="background: <?php /*=$color*/?>;">
+            <div><?php /*=$grade['displayValue']*/?></div>
         </div>
-        <?=($grade['notesForFamily']!="")?"<hr>".$grade['notesForFamily'].'<br>':''?>
+        <?php /*=($grade['notesForFamily']!="")?"<hr>".$grade['notesForFamily'].'<br>':''*/?>
         <hr>
-        <?=$grade['evtDate']?><br>
-        <?=$grade['teacherName']?>
+        <?php /*=$grade['evtDate']*/?><br>
+        <?php /*=$grade['teacherName']*/?>
         <?php
-        //        echo "<pre style='overflow: hidden;'>"; print_r($grade); echo "</pre>";
-        ?>
-    </div>
+/*        //        echo "<pre style='overflow: hidden;'>"; print_r($grade); echo "</pre>";
+        */?>
+    </div>-->
     <?php
 }
 
@@ -197,6 +212,8 @@ function printGrade(mixed $grade): void {
     </style>
     <body data-theme="<?=THEME?>">
 
+        <?php if (!isset($_SESSION['classeviva_ident'])) cvv_sync(); ?>
+
         <div class="grades-container hidden">
             <?php
             $grades = $response['grades'];
@@ -206,8 +223,6 @@ function printGrade(mixed $grade): void {
             }
             ?>
         </div>
-
-        <?php (!isset($_SESSION['classeviva_ident']))?cvv_sync():'' ?>
 
         <div class="container">
             <!-- Bottoni menù in alto -->
@@ -236,30 +251,7 @@ function printGrade(mixed $grade): void {
                 echo "<a class='tab-selector".(($isSelected)?" underline":'')."' href=\"?tab={$tab['href']}\">{$tab['name']}</a>";
             }
             ?>
-            
-            <!--<div class="main-menu">
-                <div class="main-menu-card" data-href="/grades">
-                    <img src="https://brusegan.it/assets/placeholder.svg" alt="">
-                    <div class="name">Grades</div>
-                </div>
-                <div class="main-menu-card" data-href="/subjects">
-                    <img src="https://brusegan.it/assets/placeholder.svg" alt="">
-                    <div class="name">Subjects</div>
-                </div>
-                <div class="main-menu-card" data-href="/agenda">
-                    <img src="https://brusegan.it/assets/placeholder.svg" alt="">
-                    <div class="name">Agenda</div>
-                </div>
-                <script>
-                    document.querySelectorAll('.main-menu-card').forEach(card => {
-                        card.addEventListener('click', () => {
-                            if (card.getAttribute('data-disabled') !== 'true') {
-                                window.location.href = card.getAttribute('data-href');
-                            }
-                        });
-                    });
-                </script>
-            </div>-->
+
             <?php
             if ($currentTab === "graphs") {
                 ?>
