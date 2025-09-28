@@ -11,7 +11,8 @@ use cvv\CvvIntegration;
 
 define('BASE_PATH', dirname(__DIR__));
 session_start();
-const URL_PATH = "https://gradecraft.test";
+//1 => development; 0 => published
+const URL_PATH = "https://gradecraft.". ((1) ? "test" : "brusegan.it") ;
 const COMMON_HTML_HEAD    = BASE_PATH . '/public/commons/head.php';
 const COMMON_HTML_FOOT    = BASE_PATH . '/public/commons/bottom_navigation.php';
 const COMMON_HTML_TNAVBAR = BASE_PATH . '/public/commons/top_navigation.php';
