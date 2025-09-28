@@ -380,7 +380,7 @@ function printGrade(mixed $grade): void {
                 } else {
                     gradeColor = '#ef4444'; // Rosso
                 }
-                let cardColor = window.getComputedStyle(document.querySelector("body")).getPropertyValue('--card-color');;
+                let cardColor = window.getComputedStyle(document.querySelector("body")).getPropertyValue('--card-color');
                 const remainingColor = changeHexColor(cardColor, -50) // Grigio
                 return value === total ? [gradeColor] : [gradeColor, remainingColor];
             };
