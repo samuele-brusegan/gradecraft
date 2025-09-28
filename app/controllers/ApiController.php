@@ -20,6 +20,7 @@ class ApiController {
         if ($isLogin) $resp = $cvvApi->login();
         else {
             $resp = $cvvApi->genericQuery($body['request'], $body['extraInput'], $body['isPost']);
+//            $resp = [];
         }
 
 

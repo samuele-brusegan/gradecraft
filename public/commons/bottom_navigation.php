@@ -6,7 +6,7 @@
  */
 
 ?>
-<!--<div style="margin-top: 6rem;"></div>-->
+<div style="margin-top: 6rem;"></div>
 <div class="b-navbar">
         <?php
     $navbar = [
@@ -17,7 +17,8 @@
         ],
         [
             "name" => "Registro",
-            "href" => "/registr",
+//            "href" => "/registr",
+            "href" => "#",
             "iconPath" => "/assets/icons/registro.svg",
         ],
         [
@@ -27,7 +28,8 @@
         ],
         [
             "name" => "Oggi",
-            "href" => "/today",
+//            "href" => "/today",
+            "href" => "#",
             "iconPath" => "/assets/icons/oggi.svg",
         ],
         [

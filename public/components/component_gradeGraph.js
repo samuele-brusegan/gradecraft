@@ -51,7 +51,7 @@ class gradeGraph extends HTMLElement {
                 justify-content: center;
 
                 /* Stili di testo */
-                font-size: 1.5rem;
+                font-size: 1.25rem;
                 line-height: 2.25rem;
                 font-weight: 700; 
                 color: #1f2937;
@@ -68,8 +68,8 @@ class gradeGraph extends HTMLElement {
 
             #circleContainer {
                 position: relative;
-                width: 4rem;
-                height: 4rem;
+                width: 3.5rem;
+                height: 3.5rem;
             }
             
             .arc-rotation {

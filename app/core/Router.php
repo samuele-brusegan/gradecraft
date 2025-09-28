@@ -35,13 +35,16 @@ class Router {
         } else {
             // Gestione errore 404
             header("HTTP/1.0 404 Not Found");
-            echo "<pre>";
-            echo "Pagina non trovata!";
-            echo $path; echo "<br>";
-            echo $url; echo "<br>";
-            echo PHP_URL_PATH; echo "<br>";
-            echo "</pre>";
-            
+            echo "<head>"; require COMMON_HTML_HEAD; echo "</head>";
+
+            echo "<div class='container'>";
+            echo    "<pre style='font-size: 4rem;'>";
+            echo    "Pagina non trovata! <br>";
+            echo    "Path:" . $path . "<br>";
+            echo    "Url :" . $url . "<br>";
+            echo    "</pre>";
+            echo "</div>";
+            require COMMON_HTML_FOOT;
         }
     }
 }

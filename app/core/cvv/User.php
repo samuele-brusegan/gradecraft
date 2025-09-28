@@ -150,10 +150,10 @@ class User {
         $c->setIdent($this->ident);
         $url = $c->collegamenti[$request];
 
-        echo "<pre>"; echo $url . " | ". var_export($isPost, true) . " | " . $request; echo "</pre>";
+//        echo "<pre>"; echo $url . " | ". var_export($isPost, true) . " | " . $request; echo "</pre>";
 
         $tmp = $this->sendRequest($url, $isPost, $request);
-        echo "<pre>"; print_r($tmp); echo "</pre>";
+//        echo "<pre>"; print_r($tmp); echo "</pre>";
         return $tmp;
     }
 

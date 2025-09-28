@@ -79,8 +79,13 @@ class Controller {
             ]
         ];
         
-        require_once BASE_PATH . '/app/views/grades.php';
+        require_once BASE_PATH . '/app/views/voti/grades.php';
     }
+
+    public function grades4Period():void {
+        require_once BASE_PATH . '/app/views/voti/grades_forPeriod.php';
+    }
+
     public function settings(): void {
         require_once BASE_PATH . '/app/views/settings.php';
     }
@@ -154,5 +159,6 @@ class Controller {
             'isPost' => $requestMethod == "POST",
         ];
         return $apiCtrl->classeviva($data, false, true);
+//        return [];
     }
 }
