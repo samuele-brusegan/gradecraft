@@ -51,4 +51,13 @@
         <?php
     }
     ?>
+    <script>
+        let navIcons = document.querySelectorAll(".nav-icon");
+        navIcons.forEach (item => {
+            let href = item.querySelector('a[href]').href;
+            item.addEventListener('click', () => {
+                window.location.href = href;
+            })
+        })
+    </script>
 </div>
