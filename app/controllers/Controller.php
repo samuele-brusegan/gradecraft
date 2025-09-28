@@ -32,17 +32,53 @@ class Controller {
     }
     public function grades(): void {
 
-        try {
+        /*try {
             $rq = "get_grades";
             $response = $this->requestToApi($rq);
             $grades = $response;
         } catch (Exception $e) {
             echo $e->getMessage();
             $grades = ["error" => "API_ERROR"];
-        }
+        }*/
 
         //2.  catch  Fetch local db (w JS)
-
+        
+        $grades = [
+            [
+                "subjectId" =>  408761,
+                "subjectCode" =>  null,
+                "subjectDesc" =>  "EDUCAZIONE CIVICA",
+                "evtId" =>  2274467,
+                "evtCode" =>  "GRV0",
+                "evtDate" =>  "2024-11-30",
+                "decimalValue" =>  8.5,
+                "displayValue" =>  "8½",
+                "displaPos" =>  1,
+                "notesForFamily" =>  "Verifica scritta di educazione Civica. tiene conto della presentazione fatta in laboratorio; del risultato della prova scritta del test sulla piattaforma",
+                "color" =>  "green",
+                "canceled" =>  false,
+                "underlined" =>  false,
+                "periodPos" =>  1,
+                "periodDesc" =>  "primo trimestre",
+                "periodLabel" =>  "primo trimestre",
+                "componentPos" =>  1,
+                "componentDesc" =>  "Scritto/Grafico",
+                "weightFactor" =>  1,
+                "skillId" =>  0,
+                "gradeMasterId" =>  0,
+                "skillDesc" =>  null,
+                "skillCode" =>  null,
+                "skillMasterId" =>  0,
+                "skillValueDesc" =>  "",
+                "skillValueShortDesc" =>  null,
+                "skillValueNote" =>  "",
+                "oldskillId" =>  0,
+                "oldskillDesc" =>  "",
+                "noAverage" =>  false,
+                "teacherName" =>  "********* SERGIO"
+            ]
+        ];
+        
         require_once BASE_PATH . '/app/views/grades.php';
     }
     public function settings(): void {

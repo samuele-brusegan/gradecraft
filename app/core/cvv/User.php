@@ -51,6 +51,7 @@ class User {
      * @return mixed Returns the decoded JSON response if the HTTP status code is 200. Otherwise, returns an associative array containing the status code, raw response message, URL, headers, and response body.
      */
     private function sendRequest(string $url, bool $isPost = false, string $request = null): mixed {
+        if (API_DETACH) return ["error" => "API_DETACH", "message" => "API_DETACHED"];
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',

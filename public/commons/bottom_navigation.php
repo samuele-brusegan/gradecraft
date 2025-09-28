@@ -6,12 +6,47 @@
  */
 
 ?>
-<div style="margin-top: 6rem;"></div>
-<div style="position: fixed; bottom: 0; left: 0; width: 100%; display: flex; justify-content: space-around; align-items: center; background: var(--card-color); z-index: 1;">
-    <!--<a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/account" ><span class="material-symbols-outlined">account_circle</span></a>
-    <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/"        ><span class="material-symbols-outlined">home</span></a>
-    <a style="color: black; text-decoration: none; margin: 1rem; border-radius: 1rem; background: #999; padding: .5rem;" href="/settings"><span class="material-symbols-outlined">settings</span></a>-->
-    <a style="text-align: center; width: 5em; color: var(--text-color); text-decoration: none; margin: .5rem; padding: .5rem;" href="/grades" >voti  </a>
-    <a style="text-align: center; width: 5em; color: var(--text-color); text-decoration: none; margin: .5rem; padding: .5rem;" href="/agenda">agenda</a>
-    <a style="text-align: center; width: 5em; color: var(--text-color); text-decoration: none; margin: .5rem; padding: .5rem;" href="/account" ><span class="material-symbols-outlined">account_circle</span></a>
+<!--<div style="margin-top: 6rem;"></div>-->
+<div class="b-navbar">
+        <?php
+    $navbar = [
+        [
+            "name" => "Home",
+            "href" => "/",
+            "iconPath" => "/assets/icons/home.svg",
+        ],
+        [
+            "name" => "Registro",
+            "href" => "/registr",
+            "iconPath" => "/assets/icons/registro.svg",
+        ],
+        [
+            "name" => "Voti",
+            "href" => "/grades",
+            "iconPath" => "/assets/icons/voti.svg",
+        ],
+        [
+            "name" => "Oggi",
+            "href" => "/today",
+            "iconPath" => "/assets/icons/oggi.svg",
+        ],
+        [
+            "name" => "Profilo",
+            "href" => "/account",
+            "iconPath" => "https://brusegan.it/assets/placeholder.svg",
+        ]
+
+    ];
+    foreach ($navbar as $navbarItem) {
+        $navbarName = $navbarItem["name"];
+        $navbarLink = $navbarItem["href"];
+        $navbarIconPath = $navbarItem["iconPath"];
+        ?>
+        <div class="nav-icon" style="">
+            <img src="<?=$navbarIconPath?>" alt="<?=$navbarName?>">
+            <a  href="<?=$navbarLink?>" ><?=$navbarName?></a>
+        </div>
+        <?php
+    }
+    ?>
 </div>
