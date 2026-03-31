@@ -8,15 +8,27 @@
 global $error;
 global $loginResponse;
 
+// Debug: log errors if present
+if (isset($error) && $error) {
+    error_log("Dashboard error: " . $error);
+}
+
 // Calcolo data odierna in italiano
 $giorni = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
 $oggi = $giorni[date('N')-1] . ' ' . date('j');
 
 // Carica e processa i voti
 $allGrades = $response['grades'] ?? [];
+error_log("Dashboard: allGrades count = " . count($allGrades));
+if (!empty($allGrades)) {
+    error_log("First grade sample: " . print_r($allGrades[0], true));
+} else {
+    error_log("Dashboard: allGrades empty or not set. Response keys: " . implode(', ', array_keys($response)));
+}
 $validGrades = array_filter($allGrades, function($g) {
     return isset($g['decimalValue']) && is_numeric($g['decimalValue']);
 });
+error_log("Dashboard: validGrades count = " . count($validGrades));
 
 // Calcola media generale
 $overallAvg = null;
@@ -26,6 +38,9 @@ if (count($validGrades) > 0) {
         $sum += $g['decimalValue'];
     }
     $overallAvg = $sum / count($validGrades);
+    error_log("Dashboard: overallAvg = " . $overallAvg);
+} else {
+    error_log("Dashboard: no valid grades, overallAvg = null");
 }
 
 // Calcola medie per periodo
@@ -68,6 +83,24 @@ unset($p);
                 <?= htmlspecialchars($oggi) ?>
             </h1>
         </header>
+
+        <?php
+        // Mostra errori se presenti
+        if (isset($response['error_subjects']) || isset($response['error_grades'])):
+        ?>
+            <div style="padding: 0 1rem; margin-bottom: 1rem;">
+                <?php if (isset($response['error_subjects'])): ?>
+                    <div class="my-card" style="margin-bottom: 0.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--grade-red);">
+                        <p style="color: var(--grade-red); margin: 0;">Errore caricamento materie</p>
+                    </div>
+                <?php endif; ?>
+                <?php if (isset($response['error_grades'])): ?>
+                    <div class="my-card" style="margin-bottom: 0.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 4px solid var(--grade-red);">
+                        <p style="color: var(--grade-red); margin: 0;">Errore caricamento voti</p>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <!-- Riepilogo medie -->
         <section class="summary-gauges" style="padding: 0 1rem; margin-bottom: 1rem;">
