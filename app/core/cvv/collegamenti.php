@@ -31,6 +31,7 @@ class Collegamenti {
     }
 
     private function setValues(): void {
+        error_log("Collegamenti::setValues() called, year='{$this->year}'");
         $this->base = "https://web" . $this->year . ".spaggiari.eu/rest"; //Per l'anno corrente $year = '';
         $this->collegamenti = [
             'base'                  => $this->base,
