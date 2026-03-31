@@ -64,8 +64,14 @@ class User {
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        if ($httpCode == 200) {
 
+        // Log per debug
+        error_log("Classeviva API: URL=$url, HTTP=$httpCode");
+        if ($httpCode != 200) {
+            error_log("Classeviva API ERROR response: " . substr($response, 0, 500));
+        }
+
+        if ($httpCode == 200) {
             global $methods;
             if ($request != null) {
                 foreach ($methods as $value) {
@@ -74,7 +80,11 @@ class User {
                     }
                 }
             }
-            return json_decode($response, true);
+            $decoded = json_decode($response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                error_log("Classeviva JSON decode error: " . json_last_error_msg() . " on response: " . substr($response, 0, 500));
+            }
+            return $decoded;
         }
         return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
     }
