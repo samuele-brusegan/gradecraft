@@ -55,12 +55,15 @@ class User {
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
             'Z-Dev-ApiKey: ' . $this->api_key,
-            'Z-Auth-Token: ' . $this->token
+            'Z-Auth-Token: ' . $this->token,
+            'Host: web.spaggiari.eu'
         ];
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_POST, $isPost);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        // Fix SSL verification for specific hostname
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
