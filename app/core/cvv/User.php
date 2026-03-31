@@ -109,6 +109,7 @@ class User {
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        error_log("User::login() - uid={$this->uid}, HTTP=$httpCode, url=$url");
 
         curl_close($ch);
         $this->last_login_response = [
@@ -117,7 +118,12 @@ class User {
             'raw' => $response,
             'decoded' => json_decode($response, true)
         ];
+            error_log("User::login() data: " . print_r($data, true));
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                error_log("User::login() JSON error: " . json_last_error_msg());
+            }
         if ($httpCode == 200) {
+                error_log("User::login() extracted ident: {$this->ident}, token_len=" . strlen($this->token));
             $data = $this->last_login_response['decoded'];
             if (isset($data['ident']) && isset($data['token'])) {
                 preg_match('/\d+/', $data['ident'], $matches);

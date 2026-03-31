@@ -23,17 +23,24 @@ class CvvIntegration {
         return $usr;
     }
     public function loadUser(): User|bool {
+        // Log per debug
+        error_log("loadUser(): session keys - auth_token=" . (isset($_SESSION['classeviva_auth_token']) ? 'yes' : 'no') .
+                  ", ident=" . (isset($_SESSION['classeviva_ident']) ? 'yes' : 'no') .
+                  ", username=" . (isset($_SESSION['classeviva_username']) ? 'yes' : 'no'));
+
         //se c'è un utente in sessione
 //        echo "<pre>"; print_r($_SESSION); echo "</pre>";
-        
+
         if (isset($_SESSION['classeviva_auth_token']) && (isset($_SESSION['classeviva_ident']) || isset($_SESSION['classeviva_username']))) {
             $uid = $_SESSION['classeviva_username'];
             $pwd = $_SESSION['classeviva_password'];
 
             //Se la sessione non è expired
             if (isset($_SESSION['classeviva_session_expiration_date'])) {
-                if (date(DATE_ATOM, time()) < $_SESSION['classeviva_session_expiration_date']) {
-
+                $now = date(DATE_ATOM, time());
+                $exp = $_SESSION['classeviva_session_expiration_date'];
+                error_log("loadUser(): checking expiration: now=$now, exp=$exp");
+                if ($now < $exp) {
                     $this->usr = new User($uid, $pwd);
                     $this->usr->token = $_SESSION['classeviva_auth_token'];
                     $this->usr->ident = $_SESSION['classeviva_ident'];
@@ -42,12 +49,18 @@ class CvvIntegration {
                     $this->usr->expDt = $_SESSION['classeviva_session_expiration_date'];
                     $this->usr->reqDt = $_SESSION['classeviva_session_request_date'];
                     $this->usr->is_logged_in = true;
+                    error_log("loadUser(): user loaded from session, ident={$this->usr->ident}");
+                    return $this->usr;
                 } else {
+                    error_log("loadUser(): session expired, attempting re-login");
                     $this->usr = $this->createUser($uid, $pwd);
-                    $this->login(); // Passa l'ident al metodo di login
+                    $result = $this->login(); // Passa l'ident al metodo di login
+                    error_log("loadUser(): re-login result: " . is_array($result) ? 'array' : gettype($result));
+                    return $this->usr;
                 }
-                return $this->usr;
             }
+        } else {
+            error_log("loadUser(): no session data found");
         }
         return false;
     }
@@ -109,6 +122,9 @@ class CvvIntegration {
         }
 
         $resp = $this->usr->login();
+        error_log("CvvIntegration::login() after User->login(): is_logged_in=" . ($this->usr->is_logged_in ? 'true' : 'false') .
+                  ", ident=" . ($this->usr->ident ?? 'null') .
+                  ", token_len=" . (isset($this->usr->token) ? strlen($this->usr->token) : 'null'));
 
         // Only set session data if login succeeded (properties are set and is_logged_in is true)
         if ($this->usr->is_logged_in) {
@@ -121,6 +137,9 @@ class CvvIntegration {
             $_SESSION['classeviva_session_request_date'] = $this->usr->reqDt;
             $_SESSION['classeviva_first_name'] = $this->usr->firstName;
             $_SESSION['classeviva_last_name'] = $this->usr->lastName;
+            error_log("CvvIntegration::login() session saved successfully");
+        } else {
+            error_log("CvvIntegration::login() login failed, session NOT saved");
         }
         // If login failed, session variables remain unset; return the error response
         return $resp;
