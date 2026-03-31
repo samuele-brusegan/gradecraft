@@ -20,6 +20,7 @@ $oggi = $giorni[date('N')-1] . ' ' . date('j');
 // Carica e processa i voti
 $allGrades = $response['grades'] ?? [];
 error_log("Dashboard: allGrades count = " . count($allGrades));
+error_log("Dashboard: response keys = " . implode(', ', array_keys($response)));
 if (!empty($allGrades) && is_array($allGrades)) {
     $first = reset($allGrades);
     if ($first !== false) {
@@ -28,7 +29,7 @@ if (!empty($allGrades) && is_array($allGrades)) {
         error_log("allGrades array is empty after reset");
     }
 } else {
-    error_log("Dashboard: allGrades empty or not array. Type: " . gettype($allGrades) . ". Response keys: " . implode(', ', array_keys($response ?? [])));
+    error_log("Dashboard: allGrades empty or not array. Type: " . gettype($allGrades));
 }
 $validGrades = array_filter($allGrades, function($g) {
     return isset($g['decimalValue']) && is_numeric($g['decimalValue']);
