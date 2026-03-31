@@ -7,7 +7,6 @@
 
 namespace cvv;
 
-use const CVV_URLS;
 
 include_once 'collegamenti.php';
 include_once 'apiMethods.php';
@@ -75,14 +74,13 @@ class User {
                     }
                 }
             }
-
             return json_decode($response, true);
         }
         return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
     }
 
     public function login(): string|false {
-        $c = CVV_URLS;
+        $c = $GLOBALS['CVV_URLS'];
         $url = $c->collegamenti['login'];
         $headers = [
             'User-Agent: ' . $this->user_agent,
@@ -102,15 +100,6 @@ class User {
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-        if ($response === false) {
-            echo "<pre>";
-            echo "cURL error: <br>";
-            echo "EFFECTIVE_URL: " . curl_getinfo($ch, CURLINFO_EFFECTIVE_URL) . "<br>";
-            echo "RESPONSE_CODE: " . curl_getinfo($ch, CURLINFO_RESPONSE_CODE) . "<br>";
-            echo "ERROR_NUMBER : " . curl_errno($ch) . "<br>";
-            echo "ERROR_VERBOSE: " . curl_error($ch) . "<br>";
-            echo "</pre>";
-        }
         curl_close($ch);
         $this->last_login_response = [
             'url' => $url,
@@ -141,7 +130,7 @@ class User {
 
     public function genericQuery($request, $extraInput = null, $isPost = false) {
         if (!$this->is_logged_in) return ["error" => "NOT_LOGGED_IN", "message" => "Prima di chiamare un API (diversa da login) devi autenticarti. Contattare il dev se vedete questo errore", "instr" => "Per autenticarti, chiamare questo stesso file in POST con path = login, nel body passare username e password."];
-        $c = CVV_URLS;
+        $c = $GLOBALS['CVV_URLS'];
         if ($extraInput != null) {
             foreach ($extraInput as $key => $value) {
                 $c->setGeneric($key, $value);
@@ -153,7 +142,7 @@ class User {
 //        echo "<pre>"; echo $url . " | ". var_export($isPost, true) . " | " . $request; echo "</pre>";
 
         $tmp = $this->sendRequest($url, $isPost, $request);
-//        echo "<pre>"; print_r($tmp); echo "</pre>";
+    //    echo "<pre>"; print_r($tmp); echo "</pre>";
         return $tmp;
     }
 

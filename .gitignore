@@ -1,2 +1,27 @@
 /.idea/.gitignore
 /.idea
+
+# Environment configuration
+.env
+.env.local
+.env.*.local
+
+# Debug scripts storage
+storage/
+scripts/.env
+
+# Session files
+sessions/
+
+# Logs
+logs/
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db

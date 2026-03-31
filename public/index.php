@@ -27,16 +27,36 @@ require_once BASE_PATH . '/public/commons/session_wall.php';
 require_once BASE_PATH . '/app/controllers/Controller.php';
 
 require_once BASE_PATH . '/app/core/cvv/collegamenti.php';
-const CVV_URLS = new Collegamenti(); CVV_URLS->setGeneric("year", "24");
 require_once BASE_PATH . '/app/core/cvv/ClassevivaIntegration.php';
 require_once BASE_PATH . '/app/controllers/ApiController.php';
 
 checkSessionExpiration();
 
+// Determina l'anno scolastico (da .env se presente, altrimenti default '24')
+$year = '24'; // default
+if (file_exists(BASE_PATH . '/.env')) {
+    $envLines = file(BASE_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($envLines as $line) {
+        if (strpos(trim($line), '#') === 0) continue;
+        if (strpos($line, '=') !== false) {
+            list($key, $value) = explode('=', $line, 2);
+            if (trim($key) === 'CLASSEVIVA_YEAR') {
+                $year = trim($value);
+                break;
+            }
+        }
+    }
+}
 
-// Ricreo l'ambiente di Cvv
-const CVV_API  = new CvvIntegration(); //Req. PHP 8.1
-define("USR", CVV_API->loadUser());
+// Inizializza CVV_URLS global
+$GLOBALS['CVV_URLS'] = new Collegamenti();
+$GLOBALS['CVV_URLS']->setGeneric('year', $year);
+
+// Inizializza CVV_API global
+$GLOBALS['CVV_API'] = new CvvIntegration();
+
+// Carica utente in sessione
+define("USR", $GLOBALS['CVV_API']->loadUser());
 
 
 // Inizializza il router

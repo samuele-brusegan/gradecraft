@@ -10,75 +10,164 @@ include_once BASE_PATH . '/app/core/cvv/apiMethods.php';
 class Controller {
     public function index(): void {
         // 1. Chiede al Model di ottenere i dati
+        $response = [];
         try {
             $rq = "subjects";
             $responseA = $this->requestToApi($rq);
             $response['subjects'] = $responseA;
         } catch (Exception $e) {
-            echo $e->getMessage();
-            $response = ["error" => "API_ERROR_SUBJECTS"];
+            $response['error_subjects'] = "API_ERROR_SUBJECTS";
         }
         try {
             $rq = "get_grades";
             $responseA = $this->requestToApi($rq);
             $response['grades'] = $responseA;
         } catch (Exception $e) {
-            echo $e->getMessage();
-            $response = ["error" => "API_ERROR_GRADES"];
+            $response['error_grades'] = "API_ERROR_GRADES";
         }
 
             // 2. Passa i dati alla View per la visualizzazione
         require_once BASE_PATH . '/app/views/dashboard.php';
     }
     public function grades(): void {
-
-        /*try {
+        try {
             $rq = "get_grades";
-            $response = $this->requestToApi($rq);
-            $grades = $response;
+            $allGrades = $this->requestToApi($rq);
         } catch (Exception $e) {
-            echo $e->getMessage();
-            $grades = ["error" => "API_ERROR"];
-        }*/
+            $allGrades = ["error" => "API_ERROR"];
+        }
 
-        //2.  catch  Fetch local db (w JS)
-        
-        $grades = [
-            [
-                "subjectId" =>  408761,
-                "subjectCode" =>  null,
-                "subjectDesc" =>  "EDUCAZIONE CIVICA",
-                "evtId" =>  2274467,
-                "evtCode" =>  "GRV0",
-                "evtDate" =>  "2024-11-30",
-                "decimalValue" =>  8.5,
-                "displayValue" =>  "8½",
-                "displaPos" =>  1,
-                "notesForFamily" =>  "Verifica scritta di educazione Civica. tiene conto della presentazione fatta in laboratorio; del risultato della prova scritta del test sulla piattaforma",
-                "color" =>  "green",
-                "canceled" =>  false,
-                "underlined" =>  false,
-                "periodPos" =>  1,
-                "periodDesc" =>  "primo trimestre",
-                "periodLabel" =>  "primo trimestre",
-                "componentPos" =>  1,
-                "componentDesc" =>  "Scritto/Grafico",
-                "weightFactor" =>  1,
-                "skillId" =>  0,
-                "gradeMasterId" =>  0,
-                "skillDesc" =>  null,
-                "skillCode" =>  null,
-                "skillMasterId" =>  0,
-                "skillValueDesc" =>  "",
-                "skillValueShortDesc" =>  null,
-                "skillValueNote" =>  "",
-                "oldskillId" =>  0,
-                "oldskillDesc" =>  "",
-                "noAverage" =>  false,
-                "teacherName" =>  "********* SERGIO"
-            ]
-        ];
-        
+        $subjectId = $_GET['subject'] ?? null;
+        $error = null;
+        $validGrades = [];
+        $subjectsList = [];
+
+        if (isset($allGrades['error'])) {
+            $error = $allGrades['error'];
+        } else {
+            // Filtra solo voti con decimalValue numerico
+            $validGrades = array_filter($allGrades, function($g) {
+                return isset($g['decimalValue']) && is_numeric($g['decimalValue']);
+            });
+
+            // Recupera lista materie (per nomi)
+            try {
+                $subjectsRaw = $this->requestToApi('subjects');
+                foreach ($subjectsRaw as $s) {
+                    $subjectsList[$s['id']] = $s['description'];
+                }
+            } catch (Exception $e) {
+                // ignore
+            }
+        }
+
+        // Se c'è subjectId, filtra
+        if ($subjectId && !$error) {
+            $filteredGrades = array_filter($validGrades, function($g) use ($subjectId) {
+                return $g['subjectId'] == $subjectId;
+            });
+            $validGrades = array_values($filteredGrades);
+        }
+
+        // Calcolo medie
+        $overallAvg = null;
+        $subjectAverages = [];
+        $globalPeriods = [];
+
+        if (!$error && count($validGrades) > 0) {
+            // Media globale
+            $sum = array_sum(array_column($validGrades, 'decimalValue'));
+            $count = count($validGrades);
+            $overallAvg = $sum / $count;
+
+            // Raggruppa per materia e periodo
+            foreach ($validGrades as $g) {
+                $sid = $g['subjectId'];
+                $pDesc = $g['periodDesc'] ?? 'Senza periodo';
+                $pPos = $g['periodPos'] ?? 0;
+                $value = floatval($g['decimalValue']);
+
+                // init materia se necessario
+                if (!isset($subjectAverages[$sid])) {
+                    $subjectAverages[$sid] = [
+                        'name' => $subjectsList[$sid] ?? ($g['subjectDesc'] ?? 'Materia'),
+                        'total_sum' => 0,
+                        'total_count' => 0,
+                        'periods' => []
+                    ];
+                }
+                $subjectAverages[$sid]['total_sum'] += $value;
+                $subjectAverages[$sid]['total_count']++;
+
+                // init periodo
+                if (!isset($subjectAverages[$sid]['periods'][$pDesc])) {
+                    $subjectAverages[$sid]['periods'][$pDesc] = [
+                        'sum' => 0,
+                        'count' => 0,
+                        'pos' => $pPos
+                    ];
+                }
+                $subjectAverages[$sid]['periods'][$pDesc]['sum'] += $value;
+                $subjectAverages[$sid]['periods'][$pDesc]['count']++;
+
+                // global periodi
+                if (!isset($globalPeriods[$pDesc])) {
+                    $globalPeriods[$pDesc] = ['sum' => 0, 'count' => 0, 'pos' => $pPos];
+                }
+                $globalPeriods[$pDesc]['sum'] += $value;
+                $globalPeriods[$pDesc]['count']++;
+            }
+
+            // Calcola medie per materia
+            foreach ($subjectAverages as &$subj) {
+                $subj['total_avg'] = $subj['total_count'] > 0 ? $subj['total_sum'] / $subj['total_count'] : 0;
+                // Trova ultimo periodo (max pos)
+                $lastPeriod = null;
+                $maxPos = -1;
+                foreach ($subj['periods'] as $pDesc => $pData) {
+                    if ($pData['pos'] > $maxPos) {
+                        $maxPos = $pData['pos'];
+                        $lastPeriod = [
+                            'desc' => $pDesc,
+                            'avg' => $pData['count'] > 0 ? $pData['sum'] / $pData['count'] : 0
+                        ];
+                    }
+                }
+                $subj['last_period'] = $lastPeriod;
+                // ordina periodi per pos
+                uasort($subj['periods'], fn($a,$b) => ($a['pos'] ?? 0) <=> ($b['pos'] ?? 0));
+                foreach ($subj['periods'] as &$p) {
+                    $p['avg'] = $p['count'] > 0 ? $p['sum'] / $p['count'] : 0;
+                    unset($p['sum'], $p['count'], $p['pos']);
+                }
+            }
+            unset($subj);
+
+            // Global periods
+            foreach ($globalPeriods as &$p) {
+                $p['avg'] = $p['count'] > 0 ? $p['sum'] / $p['count'] : 0;
+                unset($p['sum'], $p['count'], $p['pos']);
+            }
+            uasort($globalPeriods, fn($a,$b) => ($a['pos'] ?? 0) <=> ($b['pos'] ?? 0));
+        }
+
+        // Prepara dati per la view
+        if ($subjectId) {
+            $subjectName = null;
+            if (isset($subjectAverages[$subjectId])) {
+                $subjectName = $subjectAverages[$subjectId]['name'];
+            } elseif (isset($subjectsList[$subjectId])) {
+                $subjectName = $subjectsList[$subjectId];
+            } else {
+                $subjectName = 'Materia';
+            }
+            $subject = [
+                'id' => $subjectId,
+                'description' => $subjectName
+            ];
+            $grades = $validGrades;
+        }
+
         require_once BASE_PATH . '/app/views/voti/grades.php';
     }
 
@@ -94,42 +183,39 @@ class Controller {
             $rq = "subjects";
             $response = $this->requestToApi($rq);
         } catch (Exception $e) {
-            echo $e->getMessage();
-            $response = ["error" => "API_ERROR"];
+                        $response = ["error" => "API_ERROR"];
         }
         require_once BASE_PATH . '/app/views/subjects.php';
     }
     public function agenda(): void {
+        $error = null;
         try {
-            $rq = "agenda_da_a";
+            // Use overview API to get both lessons and agenda events
+            $rq = "overview";
 
-            $date_from = "";
-            $date_to   = "";
-            if (isset($_POST['date_from']) && isset($_POST['date_to'])) {
-                $date_from = ["date" => $_POST['date_from']];
-                $date_to   = ["date" => $_POST['date_to']];
+            // Determine date to show - support both GET and POST
+            $dateParam = $_GET['date'] ?? $_POST['date'] ?? null;
+            if ($dateParam) {
+                $date_from = $date_to = date("Ymd", strtotime($dateParam));
             } else {
-                $date_from  = (array) new DateTime();
-                $date_to    = (array) new DateTime("now +1 month");
+                // Default: only today
+                $today = new DateTime();
+                $date_from = $date_to = $today->format('Ymd');
             }
 
-            $date_from = $date_from['date'];
-            $date_to   = $date_to  ['date'];
-            $date_from = date("Ymd", strtotime($date_from));
-            $date_to  =  date("Ymd", strtotime($date_to));
-
-            $date_from = "20250301";
-            $date_to   = "20250401";
-
-
-            $response = $this->requestToApi($rq, [
+            $overview = $this->requestToApi($rq, [
                 "date_from" => $date_from,
                 "date_to"   => $date_to
             ]);
 
+            // Extract lessons and agenda items
+            $lessons = $overview['lessons'] ?? [];
+            $agenda = $overview['agenda'] ?? [];
+
         } catch (Exception $e) {
-            echo $e->getMessage();
-            $response = ["error" => "API_ERROR"];
+            $lessons = [];
+            $agenda = [];
+            $error = "API_ERROR";
         }
         require_once BASE_PATH . '/app/views/agenda.php';
     }
@@ -144,8 +230,11 @@ class Controller {
      * @return array Returns the API response as a string on success or false if the response cannot be retrieved.
      * @throws Exception If the HTTP response code differs from 200, throwing an exception with error details.
      */
-    private function requestToApi(string $rq, array $extraInput=[""]): array {
+    private function requestToApi(string $rq, array $extraInput=[]): array {
         global $methods;
+        if (!isset($methods[$rq])) {
+            return ['error' => 'INVALID_API_REQUEST', 'message' => "API request '{$rq}' not found"];
+        }
         $apiCtrl = new ApiController();
         $method = $methods[$rq];
         $url = $method['url'];
@@ -156,7 +245,7 @@ class Controller {
             'request' => $url,
             'extraInput' => $extraInput,
             'cvvArrKey' => $cvvArrKey,
-            'isPost' => $requestMethod == "POST",
+            'isPost' => $requestMethod === "POST",
         ];
         return $apiCtrl->classeviva($data, false, true);
 //        return [];

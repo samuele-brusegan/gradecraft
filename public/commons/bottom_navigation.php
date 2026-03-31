@@ -5,6 +5,7 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 
+$currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 ?>
 <div style="margin-top: 6rem;"></div>
 <div class="b-navbar">
@@ -29,7 +30,7 @@
         [
             "name" => "Oggi",
 //            "href" => "/today",
-            "href" => "#",
+            "href" => "/agenda",
             "iconPath" => "/assets/icons/oggi.svg",
         ],
         [
@@ -43,8 +44,9 @@
         $navbarName = $navbarItem["name"];
         $navbarLink = $navbarItem["href"];
         $navbarIconPath = $navbarItem["iconPath"];
+        $isActive = ($currentPath == $navbarLink);
         ?>
-        <div class="nav-icon" style="">
+        <div class="nav-icon <?= $isActive ? 'active' : '' ?>" style="">
             <img src="<?=$navbarIconPath?>" alt="<?=$navbarName?>">
             <a  href="<?=$navbarLink?>" ><?=$navbarName?></a>
         </div>

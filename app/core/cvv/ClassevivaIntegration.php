@@ -7,7 +7,6 @@
 
 namespace cvv;
 
-use const CVV_URLS;
 
 include_once 'User.php';
 include_once 'collegamenti.php';
@@ -110,18 +109,20 @@ class CvvIntegration {
         }
 
         $resp = $this->usr->login();
-        //TODO: Verificare che il login sia andato a buon fine
 
-        //Salvo in sessione le informazioni restituitemi
-        $_SESSION['classeviva_auth_token'] = $this->usr->token;
-        $_SESSION['classeviva_ident'] = $this->usr->ident;
-        $_SESSION['classeviva_username'] = $this->usr->uid;
-        $_SESSION['classeviva_password'] = $this->usr->pwd;
-        //print_r($this -> usr);
-        $_SESSION['classeviva_session_expiration_date'] = $this->usr->expDt;
-        $_SESSION['classeviva_session_request_date'] = $this->usr->reqDt;
-        $_SESSION['classeviva_first_name'] = $this->usr->firstName;
-        $_SESSION['classeviva_last_name'] = $this->usr->lastName;
+        // Only set session data if login succeeded (properties are set and is_logged_in is true)
+        if ($this->usr->is_logged_in) {
+            // Salvo in sessione le informazioni restituitemi
+            $_SESSION['classeviva_auth_token'] = $this->usr->token;
+            $_SESSION['classeviva_ident'] = $this->usr->ident;
+            $_SESSION['classeviva_username'] = $this->usr->uid;
+            $_SESSION['classeviva_password'] = $this->usr->pwd;
+            $_SESSION['classeviva_session_expiration_date'] = $this->usr->expDt;
+            $_SESSION['classeviva_session_request_date'] = $this->usr->reqDt;
+            $_SESSION['classeviva_first_name'] = $this->usr->firstName;
+            $_SESSION['classeviva_last_name'] = $this->usr->lastName;
+        }
+        // If login failed, session variables remain unset; return the error response
         return $resp;
     }
 
@@ -140,7 +141,7 @@ class CvvIntegration {
      */
     public function genericQuery(string $request, mixed $extraInput = null, bool $isPost = false): array {
         //Dev'esistere un utente
-        $c = CVV_URLS;
+        $c = $GLOBALS['CVV_URLS'];
 
         if (!isset($this->usr)) return [
             "error" => 'NO_USER',

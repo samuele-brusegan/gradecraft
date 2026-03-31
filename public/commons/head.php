@@ -5,6 +5,7 @@
  * sotto la licenza MIT. Vedere il file LICENSE per i dettagli.
  */
 ?>
+
 <!-- CDN: Bootstrap -->
 <link  href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
@@ -31,3 +32,17 @@
 
 <!-- Components -->
 <script src="components/component_gradeGraph.js"></script>
+<script src="components/component_subjectCard.js"></script>
+<script src="components/component_averageAreaChart.js"></script>
+<script src="components/component_gradeGauge.js"></script>
+
+<!-- Theme sync from sessionStorage -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const savedTheme = sessionStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+    }
+});
+</script>
+
