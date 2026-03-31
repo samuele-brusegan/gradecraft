@@ -47,10 +47,12 @@ if (file_exists(BASE_PATH . '/.env')) {
         }
     }
 }
+error_log("CLASSEVIVA_YEAR determined: '" . $year . "'");
 
 // Inizializza CVV_URLS global
 $GLOBALS['CVV_URLS'] = new Collegamenti();
 $GLOBALS['CVV_URLS']->setGeneric('year', $year);
+error_log("CVV_URLS after setGeneric: base=" . $GLOBALS['CVV_URLS']->base . " login=" . $GLOBALS['CVV_URLS']->collegamenti['login']);
 
 // Inizializza CVV_API global
 $GLOBALS['CVV_API'] = new CvvIntegration();
