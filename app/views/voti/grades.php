@@ -6,24 +6,46 @@
  */
 
 if (!isset($grades)) { $grades = ['error' => '']; }
+if (!isset($subjectAverages)) $subjectAverages = [];
+if (!isset($overallAvg)) $overallAvg = null;
+if (!isset($globalPeriods)) $globalPeriods = [];
+
+$gradeColor = fn(float $v): string =>
+    $v >= 7 ? 'var(--grade-green)' : ($v >= 6 ? 'var(--grade-yellow)' : 'var(--grade-red)');
+
+$progressBar = function(float $value, float $max, string $label = '', string $extraClass = '') use ($gradeColor): string {
+    $pct = min(max($value / $max, 0), 1) * 100;
+    $clr = $gradeColor($value);
+    $safeLabel = htmlspecialchars($label);
+    $labelHtml = $safeLabel !== '' ? '<span class="bar-label">' . $safeLabel . '</span>' : '';
+    return '<div class="bar-wrap ' . $extraClass . '">'
+         . '<div class="bar-top"><span class="bar-value">' . $value . '</span><span class="bar-suffix">/10</span></div>'
+         . '<div class="bar-track"><div class="bar-fill" style="width:' . $pct . '%;background:' . $clr . '"></div></div>'
+         . $labelHtml
+         . '</div>';
+};
 
 $subjectId = $_GET['subject'] ?? null;
 
-// Se abbiamo $subject, significa che siamo in modalità dettaglio
+// Se abbiamo $subject, siamo in modalità dettaglio
 if (isset($subject) && $subject):
-    // Ordinamento dei voti per data (più recenti prima)
     usort($grades, function($a, $b) {
         return strtotime($b['evtDate']) - strtotime($a['evtDate']);
     });
 
-    // Trova voto più alto
     $maxGrade = null;
     foreach ($grades as $g) {
         if ($maxGrade === null || $g['decimalValue'] > $maxGrade['decimalValue']) {
             $maxGrade = $g;
         }
     }
+
+    $maxVal = $maxGrade ? $maxGrade['decimalValue'] : 0;
+    $maxColor = $maxGrade && $maxGrade['color'] == 'blue'
+        ? 'var(--accent-blue)'
+        : $gradeColor($maxVal);
 ?>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -32,161 +54,91 @@ if (isset($subject) && $subject):
     <?php include COMMON_HTML_HEAD ?>
 </head>
 <body data-theme="<?=THEME?>">
-    <div class="container">
-
+    <div class="page-container page-votes">
         <?php if (!isset($_SESSION['classeviva_ident'])) cvv_sync(); ?>
 
-        <!-- Header Materia -->
-        <header style="padding: 2rem 1rem 1rem;">
-            <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0; line-height: 1.2;">
-                <?= htmlspecialchars($subject['description'] ?? 'Materia') ?>
-            </h1>
-        </header>
-
         <?php if (isset($grades['error'])): ?>
-            <div class="my-card">
-                <p style="color: var(--grade-red);">Errore: <?= htmlspecialchars($grades['error']) ?></p>
-            </div>
+            <p class="error-text"><?= htmlspecialchars($grades['error']) ?></p>
         <?php else: ?>
 
-            <!-- Box Voto più Alto -->
+            <!-- Header -->
+            <header class="top-bar">
+                <a href="/grades" class="back-link" aria-label="Torna indietro">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M13 16L6 10L13 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </a>
+                <div class="top-bar-info">
+                    <h1 class="top-title"><?= htmlspecialchars($subject['description']) ?></h1>
+                    <span class="top-subtitle"><?= count($grades) ?> vot<?= count($grades) === 1 ? 'o' : 'i' ?></span>
+                </div>
+            </header>
+
+            <!-- Voto più alto -->
             <?php if ($maxGrade): ?>
-                <section class="max-grade" style="padding: 0 1rem; margin-bottom: 1rem;">
-                    <div class="my-card" style="text-align: center; padding: 2rem 1rem;">
-                        <p style="color: var(--text-secondary); margin: 0 0 0.5rem 0; font-size: 0.875rem;">Voto più alto</p>
-                        <?php
-                        $maxVal = $maxGrade['decimalValue'];
-                        if ($maxGrade['color'] == 'blue') {
-                            $maxColor = 'var(--accent-blue)';
-                        } else if ($maxVal >= 6) {
-                            $maxColor = 'var(--grade-green)';
-                        } else if ($maxVal >= 5) {
-                            $maxColor = 'var(--grade-yellow)';
-                        } else {
-                            $maxColor = 'var(--grade-red)';
-                        }
-                        ?>
-                        <div style="
-                            width: 5rem;
-                            height: 5rem;
-                            border-radius: 50%;
-                            background: <?= $maxColor ?>;
-                            color: white;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            font-size: 2rem;
-                            font-weight: 700;
-                            margin: 0 auto;
-                            box-shadow: var(--shadow-md);
-                        ">
-                            <?= $maxVal ?>
+                <div class="max-grade-strip">
+                    <div class="max-grade-label">Più alto</div>
+                    <div class="bar-wrap highlight">
+                        <div class="bar-top">
+                            <span class="bar-value"><?= $maxVal ?></span>
+                            <span class="bar-suffix">/10</span>
                         </div>
-                        <p style="color: var(--text-secondary); margin: 0.5rem 0 0 0; font-size: 0.875rem;">
-                            <?= date('j M', strtotime($maxGrade['evtDate'])) ?>
-                        </p>
+                        <?php
+                        $maxPct = min(max($maxVal / 10, 0), 1) * 100;
+                        ?>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:<?= $maxPct ?>%;background:<?= $maxColor ?>"></div>
+                        </div>
                     </div>
-                </section>
+                    <div class="max-grade-date"><?= date('d/m/Y', strtotime($maxGrade['evtDate'])) ?></div>
+                </div>
             <?php endif; ?>
 
-            <!-- Grafico Specifico (Area Chart) -->
-            <section class="chart" style="padding: 0 1rem; margin-bottom: 1rem;">
-                <div class="my-card" style="height: 300px;">
-                    <h3 style="margin-top: 0; font-size: 1.125rem; font-weight: 600; color: var(--text-primary);">
-                        Andamento voti
-                    </h3>
-                    <?php if (count($grades) > 0): ?>
-                        <average-area-chart data-grades='<?= htmlspecialchars(json_encode($grades)) ?>'></average-area-chart>
-                    <?php else: ?>
-                        <div style="display: flex; align-items: center; justify-content: center; height: 220px; color: var(--text-secondary);">
-                            <p>Nessun voto disponibile</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </section>
-
-            <!-- Lista Voti -->
-            <section class="grades-list" style="padding: 0 1rem 5rem;">
-                <h2 style="font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">
-                    Ultimi voti
-                </h2>
+            <!-- Lista voti -->
+            <section class="grade-list">
                 <?php if (count($grades) > 0): ?>
                     <?php foreach ($grades as $grade):
                         $value = $grade['decimalValue'];
-                        if ($grade['color'] == 'blue') {
-                            $color = 'var(--accent-blue)';
-                        } else if ($value >= 6) {
-                            $color = 'var(--grade-green)';
-                        } else if ($value >= 5) {
-                            $color = 'var(--grade-yellow)';
-                        } else {
-                            $color = 'var(--grade-red)';
-                        }
-                        $date = date('d/m', strtotime($grade['evtDate']));
+                        $pct = min(max($value / 10, 0), 1) * 100;
+                        $clr = $grade['color'] == 'blue' ? 'var(--accent-blue)' : $gradeColor($value);
+                        $date = date('d/m/Y', strtotime($grade['evtDate']));
                     ?>
-                        <div class="grade-item my-card" style="display: flex; align-items: center; gap: 1rem; margin: 0.5rem 0; padding: 1rem;">
-                            <div style="
-                                min-width: 3.5rem;
-                                height: 3.5rem;
-                                border-radius: 50%;
-                                background: <?= $color ?>;
-                                color: white;
-                                display: flex;
-                                align-items: center;
-                                justify-content: center;
-                                font-weight: 700;
-                                font-size: 1.125rem;
-                            ">
-                                <?= $value ?>
+                        <div class="grade-row">
+                            <div class="grade-pill" style="background:<?= $clr ?>">
+                                <span><?= $value ?></span>
                             </div>
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">
-                                    <?= htmlspecialchars($grade['componentDesc'] ?? 'Voto') ?>
+                            <div class="grade-body">
+                                <div class="grade-top">
+                                    <span class="grade-type"><?= htmlspecialchars($grade['componentDesc'] ?? 'Voto') ?></span>
+                                    <span class="grade-date"><?= $date ?></span>
                                 </div>
-                                <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                                    <?= $date ?> • <?= htmlspecialchars($grade['teacherName'] ?? '') ?>
+                                <div class="grade-micro-track">
+                                    <div class="grade-micro-fill" style="width:<?= $pct ?>%;background:<?= $clr ?>"></div>
                                 </div>
+                                <?php if (!empty($grade['teacherName'])): ?>
+                                    <div class="grade-teacher"><?= htmlspecialchars($grade['teacherName']) ?></div>
+                                <?php endif; ?>
                                 <?php if (!empty($grade['notesForFamily'])): ?>
-                                    <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.5rem 0 0 0; line-height: 1.4;">
-                                        <?= htmlspecialchars($grade['notesForFamily']) ?>
-                                    </p>
+                                    <div class="grade-notes"><?= htmlspecialchars($grade['notesForFamily']) ?></div>
                                 <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="my-card">
-                        <p style="color: var(--text-secondary); margin: 0;">Nessun voto presente per questa materia.</p>
-                    </div>
+                    <p class="empty-text">Nessun voto presente.</p>
                 <?php endif; ?>
             </section>
 
         <?php endif; ?>
-
     </div>
-
-    <script>
-    function toggleDetails(subjectId) {
-        const details = document.getElementById('details-' + subjectId);
-        const chevron = document.getElementById('chevron-' + subjectId);
-        if (details.style.display === 'none' || !details.style.display) {
-            details.style.display = 'block';
-            chevron.style.transform = 'rotate(180deg)';
-        } else {
-            details.style.display = 'none';
-            chevron.style.transform = 'rotate(0deg)';
-        }
-    }
-    </script>
-
     <?php include COMMON_HTML_FOOT ?>
-
 </body>
 </html>
 
 <?php
 else:
 ?>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -195,78 +147,56 @@ else:
     <?php include COMMON_HTML_HEAD ?>
 </head>
 <body data-theme="<?=THEME?>">
-    <div class="container">
-        <?php if (!isset($_SESSION['classeviva_ident'])): ?>
-            <?php cvv_sync(); ?>
+    <div class="page-container page-votes">
+
+        <?php if (isset($error) && $error): ?>
+            <p class="error-text"><?= htmlspecialchars($error) ?></p>
+        <?php elseif (empty($subjectAverages)): ?>
+            <p class="empty-text">Nessun voto disponibile.</p>
         <?php else: ?>
-            <header style="padding: 2rem 1rem 1rem;">
-                <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0;">Voti</h1>
+
+            <!-- Header -->
+            <header class="top-bar">
+                <h1 class="top-title">Voti</h1>
             </header>
 
-            <?php if (isset($error) && $error): ?>
-                <div class="my-card">
-                    <p style="color: var(--grade-red);">Errore: <?= htmlspecialchars($error) ?></p>
+            <!-- Media generale -->
+            <?php if ($overallAvg !== null): ?>
+                <div class="overall-strip">
+                    <?= $progressBar(round($overallAvg, 1), 10, 'Media generale', 'highlight') ?>
                 </div>
-            <?php elseif (empty($subjectAverages)): ?>
-                <div class="my-card">
-                    <p style="color: var(--text-secondary); margin: 0;">Nessun voto disponibile.</p>
-                </div>
-            <?php else: ?>
-                <?php if ($overallAvg !== null): ?>
-                    <div class="my-card" style="text-align: center; padding: 1.5rem; margin-bottom: 1rem;">
-                        <h3 style="margin: 0 0 0.5rem 0; font-size: 1.125rem; font-weight: 600; color: var(--text-primary);">
-                            Media Generale
-                        </h3>
-                        <grade-gauge value="<?= number_format($overallAvg, 2) ?>" max="10" label=""></grade-gauge>
-                    </div>
-                <?php endif; ?>
+            <?php endif; ?>
 
-                <?php if (!empty($globalPeriods)): ?>
-                    <div class="my-card" style="padding: 1rem; margin-bottom: 1rem;">
-                        <h3 style="margin: 0 0 1rem 0; font-size: 1.125rem; font-weight: 600; color: var(--text-primary);">
-                            Medie per Periodo
-                        </h3>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem;">
-                            <?php foreach ($globalPeriods as $pDesc => $pData): ?>
-                                <div style="text-align: center;">
-                                    <grade-gauge value="<?= number_format($pData['avg'], 2) ?>" max="10" label="<?= htmlspecialchars($pDesc) ?>"></grade-gauge>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <div style="padding: 0 1rem 5rem;">
-                    <h2 style="font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">
-                        Materie
-                    </h2>
-                    <?php foreach ($subjectAverages as $sid => $subj): ?>
-                        <div class="my-card" style="margin-bottom: 0.5rem; padding: 1rem;">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <grade-gauge id="gauge-<?= $sid ?>" value="<?= number_format($subj['total_avg'], 2) ?>" max="10" label="<?= htmlspecialchars($subj['name']) ?>"></grade-gauge>
-                                <button onclick="toggleDetails(<?= $sid ?>)"
-                                        style="background: none; border: none; color: var(--accent-blue); font-size: 1.5rem; cursor: pointer; padding: 0.5rem; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;"
-                                        id="chevron-<?= $sid ?>" aria-label="Mostra dettagli">
-                                    ⇩
-                                </button>
-                            </div>
-                            <div id="details-<?= $sid ?>" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                                <h4 style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em;">
-                                    Medie per periodo
-                                </h4>
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 0.75rem;">
-                                    <?php foreach ($subj['periods'] as $pDesc => $pData): ?>
-                                        <div style="text-align: center;">
-                                            <grade-gauge value="<?= number_format($pData['avg'], 2) ?>" max="10" label="<?= htmlspecialchars($pDesc) ?>"></grade-gauge>
-                                        </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            </div>
+            <!-- Medie per periodo -->
+            <?php if (!empty($globalPeriods)): ?>
+                <div class="period-strip">
+                    <?php foreach ($globalPeriods as $pDesc => $pData): ?>
+                        <div class="period-mini">
+                            <?= $progressBar(round($pData['avg'], 1), 10, $pDesc, 'mini') ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <?php endif; ?>
             <?php endif; ?>
+
+            <!-- Materie -->
+            <section class="subject-list">
+                <?php foreach ($subjectAverages as $sid => $subj): ?>
+                    <div class="subject-row" onclick="window.location.href='/grades/subject/<?= $sid ?>'" style="cursor:pointer">
+                        <div class="subject-top">
+                            <span class="subject-name"><?= htmlspecialchars($subj['name']) ?></span>
+                            <span class="subject-arrow">
+                                <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+                                    <path d="M9 5L16 12L9 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <?= $progressBar(round($subj['total_avg'], 1), 10) ?>
+                    </div>
+                <?php endforeach; ?>
+            </section>
+
+        <?php endif; ?>
+
     </div>
     <?php include COMMON_HTML_FOOT ?>
 </body>

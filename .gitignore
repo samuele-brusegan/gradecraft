@@ -6,6 +6,12 @@
 .env.local
 .env.*.local
 
+# Server encryption key (auto-generated if missing)
+config/server_key.php
+
+# Encrypted credential storage
+data/*.enc
+
 # Debug scripts storage
 storage/
 scripts/.env

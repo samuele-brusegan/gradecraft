@@ -92,3 +92,324 @@ body {
     padding: 0 1rem;
     padding-top: 2rem;
 }
+
+/* ── Page Layout ── */
+
+.page-container {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 0 1rem 5rem;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Stile specifico pagina voti — padding ridotto a zero laterale */
+.page-container.page-votes {
+    padding: 0 0 6rem;
+}
+
+/* ── Top Bar ── */
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1.25rem 1rem;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: 4px;
+    transition: color 0.15s;
+}
+
+.back-link:hover { color: var(--text-primary); }
+
+.top-bar-info { overflow: hidden; }
+
+.top-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.top-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+}
+
+/* ── Progress Bars ── */
+
+.bar-wrap { --bar-h: 10px; }
+.bar-wrap.highlight { --bar-h: 14px; }
+.bar-wrap.mini { --bar-h: 8px; }
+
+.bar-top {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 1px;
+    margin-bottom: 6px;
+}
+
+.bar-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
+.bar-wrap.highlight .bar-value {
+    font-size: 2.25rem;
+    font-weight: 800;
+}
+
+.bar-wrap.mini .bar-value { font-size: 1.25rem; }
+
+.bar-suffix {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    line-height: 1;
+}
+
+.bar-track {
+    width: 100%;
+    height: var(--bar-h);
+    border-radius: calc(var(--bar-h) / 2);
+    background: var(--border-color);
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: calc(var(--bar-h) / 2);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bar-label {
+    display: block;
+    margin-top: 4px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+/* ── Max Grade Strip ── */
+
+.max-grade-strip {
+    padding: 0 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.max-grade-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.max-grade-date {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+/* ── Overall Strip ── */
+
+.overall-strip {
+    padding: 1.25rem 1.25rem 0;
+    margin-bottom: 0.75rem;
+}
+
+/* ── Period Strip ── */
+
+.period-strip {
+    display: flex;
+    gap: 1rem;
+    padding: 0 1.25rem;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.period-strip::-webkit-scrollbar { display: none; }
+
+.period-mini {
+    min-width: 140px;
+    flex-shrink: 0;
+}
+
+/* ── Grade List ── */
+
+.grade-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.25rem;
+}
+
+.grade-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.grade-row:last-child { border-bottom: none; }
+
+.grade-pill {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.125rem;
+    margin-top: 2px;
+}
+
+.grade-pill span { line-height: 1; }
+
+.grade-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.grade-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.grade-type {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.grade-date {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+}
+
+.grade-micro-track {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--border-color);
+    overflow: hidden;
+    margin-bottom: 6px;
+}
+
+.grade-micro-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.grade-teacher {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.grade-notes {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    margin-top: 4px;
+}
+
+/* ── Subject List ── */
+
+.subject-list {
+    display: flex;
+    flex-direction: column;
+    padding: 0 1.25rem;
+}
+
+.subject-row {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.subject-row:last-child { border-bottom: none; }
+
+.subject-top {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 8px;
+}
+
+.subject-name {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.expand-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    transition: background 0.15s;
+}
+
+.expand-btn:hover { background: var(--background-secondary); }
+
+.subject-details {
+    display: none;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-color);
+    flex-direction: column;
+    gap: 0.75rem;
+    animation: fadeIn 0.2s ease;
+}
+
+.subject-details.open { display: flex; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Error / Empty ── */
+
+.error-text {
+    color: var(--grade-red);
+    padding: 1.25rem;
+    font-size: 0.875rem;
+}
+
+.empty-text {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 3rem 1.25rem;
+    font-size: 0.875rem;
+}
+

@@ -25,6 +25,7 @@ class Collegamenti {
     private string $document_id = "";
     private string $elementId = "";
     private string $noteType  = "";
+    private string $attachNum = "";
 
     public function __construct() {
         $this->setValues();
@@ -50,8 +51,8 @@ class Collegamenti {
             'didattica_elemento'    => $this->base . "/v1/students/" . $this->ident . "/didactics/item/"   . $this->elementId,
             'bacheca'               => $this->base . "/v1/students/" . $this->ident . "/noticeboard",
             'bacheca_leggi'         => $this->base . "/v1/students/" . $this->ident . "/noticeboard/read/" . $this->eventCode . "/" . $this->pubId . "/101",
-            'bacheca_allega'        => $this->base . "/v1/students/" . $this->ident . "/noticeboard/attach/{{}}/{{}}/101",                      /*FIXME:AAAAA*/
-            'bacheca_allega_esterno' => "https://web.spaggiari.eu/sif/app/default/bacheca_personale.php?action=file_download&com_id={{}}",      /*FIXME:AAAAA*/
+            'bacheca_allega'         => $this->base . "/v1/students/" . $this->ident . "/noticeboard/attach/" . $this->eventCode . "/" . $this->pubId . "/" . $this->attachNum,
+            'bacheca_allega_esterno' => "https://web.spaggiari.eu/sif/app/default/bacheca_personale.php?action=file_download&com_id={{}}",
             'lezioni'               => $this->base . "/v1/students/" . $this->ident . "/lessons/today",
             'lezioni_giorno'        => $this->base . "/v1/students/" . $this->ident . "/lessons/" . $this->date_from,
             'lezioni_da_a'          => $this->base . "/v1/students/" . $this->ident . "/lessons/" . $this->date_from . "/" . $this->date_to,

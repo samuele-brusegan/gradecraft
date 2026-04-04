@@ -10,6 +10,12 @@ use cvv\CvvIntegration;
 // Definisci il percorso base dell'applicazione
 
 define('BASE_PATH', dirname(__DIR__));
+require_once BASE_PATH . '/config/CryptoHelper.php';
+require_once BASE_PATH . '/config/CredentialStore.php';
+
+// Inizializza la chiave del server (auto-generata se mancante)
+CryptoHelper::getServerKey();
+
 session_start();
 //1 => development; 0 => published
 const URL_PATH = "https://gradecraft.". ((1) ? "test" : "brusegan.it") ;
@@ -33,7 +39,7 @@ require_once BASE_PATH . '/app/controllers/ApiController.php';
 checkSessionExpiration();
 
 // Determina l'anno scolastico (da .env se presente, altrimenti default '24')
-$year = '24'; // default
+$year = ''; // default
 if (file_exists(BASE_PATH . '/.env')) {
     $envLines = file(BASE_PATH . '/.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($envLines as $line) {
@@ -47,7 +53,7 @@ if (file_exists(BASE_PATH . '/.env')) {
         }
     }
 }
-error_log("CLASSEVIVA_YEAR determined: '" . $year . "'");
+define('CLASSEVIVA_YEAR', $year);
 
 // Inizializza CVV_URLS global
 $GLOBALS['CVV_URLS'] = new Collegamenti();

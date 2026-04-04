@@ -7,7 +7,7 @@
 
 function checkSessionExpiration(): void {
     if (isset($_SESSION['classeviva_session_expiration_date'])) {
-        $requestDate = $_SESSION['classeviva_session_request_date'];
+        $requestDate = $_SESSION['classeviva_session_request_date'] ?? $_SESSION['classeviva_session_expiration_date'];
         $expirationDate = $_SESSION['classeviva_session_expiration_date'];
 
         date_default_timezone_set('Europe/Rome');
@@ -15,17 +15,19 @@ function checkSessionExpiration(): void {
         $reLoginOffest = 10;
 
         if ($expirationDate < $currentDate && $requestDate < date(DATE_ATOM, time() - $reLoginOffest)) {
-            loginRequest(); 
+            loginRequest();
         }
-    } elseif (isset($_COOKIE['users']) && $_COOKIE['users'] != "") {
-
-        $users = json_decode($_COOKIE['users'], true);
-        $user = $users[0];
-
-        $_SESSION['classeviva_username'] = $user['username'];
-        $_SESSION['classeviva_password'] = $user['password'];
-
-        loginRequest();
+    } elseif (!isset($_SESSION['classeviva_auth_token'])) {
+        // Sessione non avviata: tentativo di autoload da CredentialStore
+        $stored = CredentialStore::loadStored();
+        if ($stored) {
+            $_SESSION['classeviva_username'] = $stored['username'];
+            $_SESSION['classeviva_password'] = $stored['password'];
+            $_SESSION['classeviva_session_expiration_date'] = $stored['exp'] ?? '';
+            $_SESSION['classeviva_session_request_date'] = $stored['exp'] ?? '';
+            $_SESSION['classeviva_auth_token'] = $stored['token'] ?? '';
+            loginRequest();
+        }
     }
 }
 
@@ -36,21 +38,24 @@ function checkSessionExpiration(): void {
  * Otherwise, returns an associative array containing error details, status code, response message, headers, and body.
  */
 function loginRequest(): mixed {
-    $headers = [
-        'Content-Type: application/json',
-    ];
-    $ch = curl_init(URL_PATH."/login");
+    $ch = curl_init(URL_PATH . "/login");
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([$_SESSION['classeviva_username'], $_SESSION['classeviva_password']]));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'usr' => $_SESSION['classeviva_username'],
+        'pwd' => $_SESSION['classeviva_password'],
+    ]));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Content-Type: application/x-www-form-urlencoded',
+    ]);
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     curl_close($ch);
     if ($httpCode == 200) {
         return json_decode($response, true);
     }
-    return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "headers" => $headers, "body" => $response, "stackTrace" => debug_backtrace()];
+    error_log("loginRequest() failed: HTTP $httpCode, body=" . substr($response ?? '', 0, 500));
+    return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "body" => $response, "stackTrace" => debug_backtrace()];
 }
 
 /**

@@ -118,13 +118,10 @@ class User {
             'raw' => $response,
             'decoded' => json_decode($response, true)
         ];
-            error_log("User::login() data: " . print_r($data, true));
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                error_log("User::login() JSON error: " . json_last_error_msg());
-            }
         if ($httpCode == 200) {
-                error_log("User::login() extracted ident: {$this->ident}, token_len=" . strlen($this->token));
             $data = $this->last_login_response['decoded'];
+            error_log("User::login() response data: " . print_r($data, true));
+            error_log("User::login() extracted ident: {$this->ident}, token_len=" . strlen($this->token));
             if (isset($data['ident']) && isset($data['token'])) {
                 preg_match('/\d+/', $data['ident'], $matches);
                 $this->ident = $matches[0];

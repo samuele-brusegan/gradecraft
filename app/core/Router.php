@@ -9,12 +9,31 @@
 class Router {
     private array $routes = [];
 
-    // Aggiunge una nuova rotta
+    // Aggiunge una nuova rotta. I segmenti che iniziano con ":" sono parametri.
     public function add($url, $controller, $action): void {
-        $this->routes[$url] = [
+        $this->routes[] = [
+            'pattern' => $this->buildRegex($url),
             'controller' => $controller,
-            'action' => $action
+            'action' => $action,
         ];
+    }
+
+    private function buildRegex(string $url): string {
+        $trimmed = trim($url, '/');
+        if ($trimmed === '') {
+            // Per la root "/" gestisci caso speciale
+            return '#^/$#';
+        }
+        $segments = explode('/', $trimmed);
+        $pattern = '';
+        foreach ($segments as $seg) {
+            if ($seg[0] === ':') {
+                $pattern .= '/([^/]+)';
+            } else {
+                $pattern .= '/' . preg_quote($seg, '/');
+            }
+        }
+        return '#^' . $pattern . '$#';
     }
 
     // Smista la richiesta all'azione corretta
@@ -24,27 +43,34 @@ class Router {
             $path = '/';
         }
 
-        if (array_key_exists($path, $this->routes)) {
-            $route = $this->routes[$path];
-            $controllerName = $route['controller'];
-            $actionName = $route['action'];
+        foreach ($this->routes as $route) {
+            if (preg_match($route['pattern'], $path, $matches)) {
+                $controllerName = $route['controller'];
+                $actionName = $route['action'];
 
-            // Crea il controller e chiama l'azione
-            $controller = new $controllerName();
-            $controller->$actionName();
-        } else {
-            // Gestione errore 404
-            header("HTTP/1.0 404 Not Found");
-            echo "<head>"; require COMMON_HTML_HEAD; echo "</head>";
+                // Rimuove il match completo e popola i parametri
+                array_shift($matches);
+                if (!empty($matches)) {
+                    $_GET = array_merge($_GET, $matches);
+                }
 
-            echo "<div class='container'>";
-            echo    "<pre style='font-size: 4rem;'>";
-            echo    "Pagina non trovata! <br>";
-            echo    "Path:" . $path . "<br>";
-            echo    "Url :" . $url . "<br>";
-            echo    "</pre>";
-            echo "</div>";
-            require COMMON_HTML_FOOT;
+                $controller = new $controllerName();
+                $controller->$actionName(...$matches);
+                return;
+            }
         }
+
+        // Gestione errore 404
+        header("HTTP/1.0 404 Not Found");
+        echo "<head>"; require COMMON_HTML_HEAD; echo "</head>";
+
+        echo "<div class='container'>";
+        echo    "<pre style='font-size: 4rem;'>";
+        echo    "Pagina non trovata! <br>";
+        echo    "Path:" . $path . "<br>";
+        echo    "Url :" . $url . "<br>";
+        echo    "</pre>";
+        echo "</div>";
+        require COMMON_HTML_FOOT;
     }
 }

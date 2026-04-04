@@ -60,7 +60,16 @@ class CvvIntegration {
                 }
             }
         } else {
-            error_log("loadUser(): no session data found");
+            error_log("loadUser(): no session data found, attempting CredentialStore fallback");
+            // Fallback: tenta autoload da credenziali cifrate su disco
+            $stored = \CredentialStore::loadStored();
+            if ($stored) {
+                $this->createUser($stored['username'], $stored['password']);
+                $result = $this->login();
+                error_log("loadUser(): CredentialStore autoload result: " . ($this->usr->is_logged_in ? 'success' : 'failed'));
+                return $this->usr;
+            }
+            error_log("loadUser(): no stored credentials found");
         }
         return false;
     }

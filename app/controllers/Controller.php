@@ -171,13 +171,257 @@ class Controller {
         require_once BASE_PATH . '/app/views/voti/grades.php';
     }
 
-    public function grades4Period():void {
-        require_once BASE_PATH . '/app/views/voti/grades_forPeriod.php';
+    // /grades/subject/:id  — dettaglio materia
+    public function gradeSubject(string $subjectId): void {
+        try {
+            $rq = "get_grades";
+            $allGrades = $this->requestToApi($rq);
+        } catch (Exception $e) {
+            $allGrades = ["error" => "API_ERROR"];
+        }
+
+        $subjectsList = [];
+
+        // Recupera lista materie (per nomi)
+        try {
+            $subjectsRaw = $this->requestToApi('subjects');
+            foreach ($subjectsRaw as $s) {
+                $subjectsList[$s['id']] = $s['description'];
+            }
+        } catch (Exception $e) {
+            // ignore
+        }
+
+        // Filtra voti validi e per questa materia
+        $validGrades = [];
+        if (!isset($allGrades['error'])) {
+            $validGrades = array_values(array_filter($allGrades, function($g) use ($subjectId) {
+                return isset($g['decimalValue']) && is_numeric($g['decimalValue']) && $g['subjectId'] == $subjectId;
+            }));
+        }
+
+        // Prepara subject
+        $subjectName = $subjectsList[$subjectId] ?? 'Materia';
+        $subject = [
+            'id' => $subjectId,
+            'description' => $subjectName
+        ];
+        $grades = $validGrades;
+        $gradesData = isset($allGrades['error']) ? ['error' => $allGrades['error']] : null;
+        if ($gradesData) $grades = $gradesData;
+
+        require_once BASE_PATH . '/app/views/voti/grades_subject.php';
+    }
+
+    public function absences(): void {
+        $error = null;
+        $events = [];
+        try {
+            $raw = $this->requestToApi('assenze');
+            if (isset($raw['error'])) {
+                $error = $raw['error'];
+            } else {
+                $events = is_array($raw) ? $raw : [];
+                // Categorize each event
+                foreach ($events as &$ev) {
+                    $code = $ev['evtCode'] ?? '';
+                    $ev['type'] = match ($code) {
+                        'ABA0' => 'ASSENZA',
+                        'ABR0' => 'RITARDO',
+                        'ABR1' => 'RITARDO_BREVE',
+                        'ABU0' => 'USCITA',
+                        default => 'ALTRO',
+                    };
+                    // Sum hours for this event
+                    $ev['hours'] = isset($ev['hoursAbsence']) && is_array($ev['hoursAbsence']) ? count($ev['hoursAbsence']) : 0;
+                }
+                unset($ev);
+                // Sort by date descending
+                usort($events, fn($a, $b) => ($b['evtDate'] ?? '') <=> ($a['evtDate'] ?? ''));
+            }
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+        require_once BASE_PATH . '/app/views/absences.php';
+    }
+
+    public function notes(): void {
+        $error = null;
+        $noteTypes = [
+            'NTTE' => 'Annotazione Insegnante',
+            'NTCL' => 'Annotazione Generale',
+            'NTWN' => 'Richiamo',
+            'NTST' => 'Note Disciplinare',
+        ];
+        $allNotes = [];
+        try {
+            $raw = $this->requestToApi('note');
+            if (isset($raw['error'])) {
+                $error = $raw['error'];
+            } else {
+                foreach ($noteTypes as $typeKey => $typeLabel) {
+                    if (!empty($raw[$typeKey]) && is_array($raw[$typeKey])) {
+                        foreach ($raw[$typeKey] as $note) {
+                            $note['typeKey'] = $typeKey;
+                            $note['typeLabel'] = htmlspecialchars($typeLabel);
+                            $allNotes[] = $note;
+                        }
+                    }
+                }
+                usort($allNotes, fn($a, $b) => ($b['evtDate'] ?? '') <=> ($a['evtDate'] ?? ''));
+            }
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+        require_once BASE_PATH . '/app/views/notes.php';
+    }
+
+    public function documents(): void {
+        $error = null;
+        $documents = [];
+        $schoolReports = [];
+        try {
+            $raw = $this->requestToApi('documenti');
+            if (isset($raw['error'])) {
+                $error = $raw['error'];
+            } else {
+                $documents = $raw['documents'] ?? [];
+                $schoolReports = $raw['schoolReports'] ?? [];
+            }
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+        require_once BASE_PATH . '/app/views/documents.php';
+    }
+
+    public function noticeboard(): void {
+        $error = null;
+        $items = [];
+        try {
+            $raw = $this->requestToApi('bacheca');
+            if (isset($raw['error'])) {
+                $error = $raw['error'];
+            } else {
+                $items = $raw ?? [];
+                usort($items, function($a, $b) {
+                    $da = $a['pubDT'] ?? $a['dinsert_allegato'] ?? '1970-01-01';
+                    $db = $b['pubDT'] ?? $b['dinsert_allegato'] ?? '1970-01-01';
+                    return $db <=> $da;
+                });
+            }
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+        require_once BASE_PATH . '/app/views/noticeboard.php';
+    }
+
+    public function noticeboardRead(): void {
+        $error = null;
+        $item = null;
+        $evtCode = $_GET['evtCode'] ?? '';
+        $pubId   = $_GET['pubId'] ?? '';
+        try {
+            // Chiama l'API lista per recuperare i metadati della card
+            $listResp = $this->requestToApi('bacheca');
+            $cardMeta = null;
+            if (!isset($listResp['error']) && is_array($listResp)) {
+                foreach ($listResp as $i) {
+                    if (($i['evtCode'] ?? '') === $evtCode && ($i['pubId'] ?? '') == $pubId) {
+                        $cardMeta = $i;
+                        break;
+                    }
+                }
+            }
+
+            // Chiama l'API dettaglio per leggere il contenuto
+            $raw = $this->requestToApi('bachecaLeggi', [
+                'eventCode' => $evtCode,
+                'pubId'     => $pubId,
+            ]);
+            if (isset($raw['error'])) {
+                $error = $raw['error'];
+            } else {
+                // Unisci: i metadati della card hanno priorità per title/attachments,
+                // il dettaglio per il testo
+                if ($cardMeta) {
+                    // Unisci attachments dalla card (spesso il dettaglio non le ha)
+                    if (isset($cardMeta['attachments']) && is_array($cardMeta['attachments'])) {
+                        $raw['attachments'] = $cardMeta['attachments'];
+                    }
+                    // Metadati supplementari dalla card
+                    foreach (['pubDT', 'cntCategory', 'title', 'cntTitle', 'readStatus'] as $key) {
+                        if (!isset($raw[$key]) && isset($cardMeta[$key])) {
+                            $raw[$key] = $cardMeta[$key];
+                        }
+                    }
+                }
+                // Aggiungi evtCode e pubId al dettaglio per il JS
+                $raw['evtCode'] = $evtCode;
+                $raw['pubId']   = $pubId;
+                $item = $raw;
+            }
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+        require_once BASE_PATH . '/app/views/noticeboard_read.php';
+    }
+
+    public function noticeboardAttach(): void {
+        $evtCode   = $_GET['evtCode'] ?? '';
+        $pubId     = $_GET['pubId'] ?? '';
+        $attachNum = $_GET['attachNum'] ?? '';
+        if (!$evtCode || !$pubId || !$attachNum) {
+            http_response_code(400);
+            echo 'Parametri mancanti';
+            return;
+        }
+        try {
+            $raw = $this->requestToApi('bachecaAllegato', [
+                'eventCode' => $evtCode,
+                'pubId'     => $pubId,
+                'attachNum' => $attachNum,
+            ]);
+            if (is_array($raw) && isset($raw['pdfData'])) {
+                header('Content-Type: application/pdf');
+                header('Content-Disposition: inline; filename="allegato_' . $attachNum . '.pdf"');
+                echo $raw['pdfData'];
+            } else {
+                http_response_code(500);
+                echo 'Download fallito: ' . json_encode($raw);
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo 'Errore: ' . $e->getMessage();
+        }
+    }
+
+    public function calendar(): void {
+        $error = null;
+        $calendar = [];
+        try {
+            $raw = $this->requestToApi('calendario');
+            if (isset($raw['error'])) {
+                $error = $raw['error'];
+            } else {
+                $calendar = $raw ?? [];
+            }
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+        require_once BASE_PATH . '/app/views/calendar.php';
     }
 
     public function settings(): void {
         require_once BASE_PATH . '/app/views/settings.php';
     }
+
+    public function settingsJson(): void {
+        // Toggle JSON debug mode
+        if (!isset($_SESSION)) session_start();
+        $_SESSION['show_json_debug'] = !($_SESSION['show_json_debug'] ?? false);
+        header('Location: /settings');
+    }
+
     public function subjects(): void {
         try {
             $rq = "subjects";

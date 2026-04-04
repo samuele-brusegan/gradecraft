@@ -9,7 +9,12 @@ if (!isset($response)) { $response = ['error' => '']; }
 
 // Use the current date from controller (default to today if not set)
 $currentDate = isset($date_from) ? new DateTime($date_from) : new DateTime();
-$formattedDate = $currentDate->format('j M');
+$giorniIt = ['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+$mesiIt = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+$dayOfWeek = $giorniIt[(int)$currentDate->format('w')];
+$dayNum = $currentDate->format('j');
+$monthIt = $mesiIt[(int)$currentDate->format('n') - 1];
+$formattedDate = $dayOfWeek . ', ' . $dayNum . ' ' . $monthIt;
 $dateForInput = $currentDate->format('Y-m-d');
 ?>
 
@@ -28,8 +33,7 @@ $dateForInput = $currentDate->format('Y-m-d');
         <!-- Header -->
         <header style="padding: 2rem 1rem 1rem;">
             <h1 style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin: 0; line-height: 1.2;">
-                Oggi, <?= $formattedDate ?>
-            </h1>
+                <?= $formattedDate ?>
         </header>
 
         <!-- Date Navigation -->
@@ -104,6 +108,9 @@ $dateForInput = $currentDate->format('Y-m-d');
                                 <?php if (!empty($type) && $type != $desc): ?>
                                     <p style="font-size: 0.875rem; color: var(--text-secondary); margin: 0.25rem 0 0 0; font-style: italic;"><?= htmlspecialchars($type) ?></p>
                                 <?php endif; ?>
+                                <?php if (!empty($_SESSION['show_json_debug'])): ?>
+                                    <pre style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.5rem; overflow: auto; max-height: 200px;"><?= htmlspecialchars(json_encode($lesson, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) ?></pre>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
@@ -113,7 +120,7 @@ $dateForInput = $currentDate->format('Y-m-d');
                         <h3 style="font-size: 1.25rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary); padding: 0 1rem;">Compiti</h3>
                         <?php foreach ($agenda as $event):
                             // Get subject with multiple fallbacks
-                            $subject = $event['subjectDesc'] ?? $event['subject'] ?? $event['subjectDescription'] ?? $event['title'] ?? 'Evento';
+                            $subject = $event['subjectDesc'] ?? $event['subject'] ?? $event['subjectDescription'] ?? $event['authorName'] ?? $event['title'] ?? 'Evento';
                             // Get description/notes with multiple fallbacks (Classeviva uses 'notes' for homework)
                             $notes = $event['notes'] ?? $event['evtDescr'] ?? $event['description'] ?? $event['evtNotes'] ?? $event['text'] ?? '';
                             // Get date/time - Classeviva uses evtDatetimeBegin/End
@@ -121,15 +128,21 @@ $dateForInput = $currentDate->format('Y-m-d');
                             $datetimeEnd = $event['evtDatetimeEnd'] ?? $event['endTime'] ?? '';
                             $evtDate = $event['evtDate'] ?? $event['date'] ?? '';
 
-                            // Build time string
+                            // Build time/date string
                             $timeStr = '';
                             if ($datetimeBegin) {
                                 try {
                                     $dtBegin = new DateTime($datetimeBegin);
-                                    $timeStr = $dtBegin->format('H:i');
                                     if ($datetimeEnd) {
                                         $dtEnd = new DateTime($datetimeEnd);
-                                        $timeStr .= ' - ' . $dtEnd->format('H:i');
+                                        // Se le date sono diverse (multi-giorno)
+                                        if ($dtBegin->format('Y-m-d') !== $dtEnd->format('Y-m-d')) {
+                                            $timeStr = $dtBegin->format('d/m') . ' → ' . $dtEnd->format('d/m/Y');
+                                        } else {
+                                            $timeStr = $dtBegin->format('H:i') . ' - ' . $dtEnd->format('H:i');
+                                        }
+                                    } else {
+                                        $timeStr = $dtBegin->format('H:i');
                                     }
                                 } catch (Exception $e) {
                                     $timeStr = $datetimeBegin;
@@ -172,6 +185,9 @@ $dateForInput = $currentDate->format('Y-m-d');
                                 </div>
                                 <?php if ($notes): ?>
                                     <p style="font-size: 0.875rem; color: var(--text-primary); margin: 0; line-height: 1.5;"><?= nl2br(htmlspecialchars($notes)) ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($_SESSION['show_json_debug'])): ?>
+                                    <pre style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.5rem; overflow: auto; max-height: 200px;"><?= htmlspecialchars(json_encode($event, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) ?></pre>
                                 <?php endif; ?>
                             </div>
                         <?php endforeach; ?>

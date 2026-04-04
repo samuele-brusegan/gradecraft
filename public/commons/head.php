@@ -19,22 +19,22 @@
 <script src="https://cdn.tailwindcss.com"></script>
 
 <!-- PWA -->
-<link rel="icon" type="image/png" href="../pwa/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="../pwa/favicon.svg" />
-<link rel="shortcut icon" href="../pwa/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="../pwa/apple-touch-icon.png" />
+<link rel="icon" type="image/png" href="/pwa/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/pwa/favicon.svg" />
+<link rel="shortcut icon" href="/pwa/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/pwa/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-title" content="GradeCraft" />
-<link rel="manifest" href="../pwa/site.webmanifest" />
+<link rel="manifest" href="/pwa/site.webmanifest" />
 
 <!-- CSS -->
-<link rel="stylesheet" href="../css/common.css">
-<link rel="stylesheet" href="../css/bottom-navbar.css">
+<link rel="stylesheet" href="/css/common.css">
+<link rel="stylesheet" href="/css/bottom-navbar.css">
 
 <!-- Components -->
-<script src="components/component_gradeGraph.js"></script>
-<script src="components/component_subjectCard.js"></script>
-<script src="components/component_averageAreaChart.js"></script>
-<script src="components/component_gradeGauge.js"></script>
+<script src="/components/component_gradeGraph.js" defer></script>
+<script src="/components/component_subjectCard.js" defer></script>
+<script src="/components/component_averageAreaChart.js" defer></script>
+<script src="/components/component_gradeGauge.js" defer></script>
 
 <!-- Theme sync from sessionStorage -->
 <script>

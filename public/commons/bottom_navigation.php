@@ -17,10 +17,9 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
             "iconPath" => "/assets/icons/home.svg",
         ],
         [
-            "name" => "Registro",
-//            "href" => "/registr",
-            "href" => "#",
-            "iconPath" => "/assets/icons/registro.svg",
+            "name" => "Assenze",
+            "href" => "/absences",
+            "iconPath" => "/assets/icons/assenze.svg",
         ],
         [
             "name" => "Voti",
@@ -32,6 +31,11 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 //            "href" => "/today",
             "href" => "/agenda",
             "iconPath" => "/assets/icons/oggi.svg",
+        ],
+        [
+            "name" => "Bacheca",
+            "href" => "/noticeboard",
+            "iconPath" => "/assets/icons/bacheca.svg",
         ],
         [
             "name" => "Profilo",

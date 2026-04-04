@@ -8,8 +8,7 @@
 
 class ApiController {
     public function classeviva($data="", $isLogin=false, $return=false): array|null {
-        $body = json_decode(file_get_contents('php://input'), true);
-        if ($data != "") $body = $data;
+        $body = ($data !== "") ? $data : json_decode(file_get_contents('php://input'), true);
 
         $cvvApi = $GLOBALS['CVV_API'];
 
@@ -42,6 +41,18 @@ class ApiController {
             exit;
         }
 
+        // Handle logout action
+        if (($_POST['action'] ?? null) === 'logout') {
+            $username = $_SESSION['classeviva_username'] ?? '';
+            if ($username) {
+                CredentialStore::delete($username);
+            }
+            session_unset();
+            session_destroy();
+            header('Location: /');
+            exit;
+        }
+
         $usr = $_POST['usr'] ?? '';
         $pwd = $_POST['pwd'] ?? '';
 
@@ -56,6 +67,9 @@ class ApiController {
         $cvvApi = $GLOBALS['CVV_API'];
         $cvvApi->createUser($usr, $pwd);
         $result = $cvvApi->login();
+        error_log("ApiController::login() - CVV login result: " . substr(print_r($result, true), 0, 1000));
+        error_log("ApiController::login() - session ident=" . ($_SESSION['classeviva_ident'] ?? 'NOT SET'));
+        error_log("ApiController::login() - last_login_response: " . substr(print_r($cvvApi->last_login_response ?? 'null', true), 0, 1000));
 
         // Determine success: if the integration set the ident in session, login succeeded
         if (isset($_SESSION['classeviva_ident'])) {
@@ -81,35 +95,7 @@ class ApiController {
         $current_tkn = $_SESSION['classeviva_auth_token'];
         $current_exp = $_SESSION['classeviva_session_expiration_date'];
 
-        if (isset($_COOKIE['users'])) {
-            $users = $_COOKIE['users'];
-            $users = json_decode($users, true);
-            $flag = false;
-            foreach ($users as &$user) {
-                if ($user['username'] == $current_usr) {
-                    $user['password'] = $current_pwd;
-                    $user['token'] = $current_tkn;
-                    $user['exp'] = $current_exp;
-                    $flag = true;
-                    break;
-                }
-            }
-            if (!$flag) {
-                $users[] = [
-                    'username' => $current_usr,
-                    'password' => $current_pwd,
-                    'token'    => $current_tkn,
-                    'exp'      => $current_exp
-                ];
-            }
-        } else {
-            $users = [[
-                'username' => $current_usr,
-                'password' => $current_pwd,
-                'token'    => $current_tkn,
-                'exp'      => $current_exp
-            ]];
-        }
-        setcookie('users', json_encode($users), -1, '/');
+        // Salva credenziali cifrate con wrapped key pattern
+        CredentialStore::save($current_usr, $current_pwd, $current_tkn, $current_exp);
     }
 }

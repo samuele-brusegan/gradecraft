@@ -142,6 +142,20 @@ $methods = [
         ],
         "reqMethod" => "POST"
     ],
+    "bachecaAllegato"   => [
+        "name"  => "bachecaAllegato",
+        "path"  => "generic",
+        "method" => "POST",
+        "url"   => 'bacheca_allega',
+        "cvvArrKey" => "",
+        "extraInput" => [
+            "eventCode",
+            "pubId",
+            "attachNum"
+        ],
+        "reqMethod" => "GET",
+        "particularDataParse" => "PDF"
+    ],
     "overview"          => [
         "name"  => "overview",
         "path"  => "generic",
