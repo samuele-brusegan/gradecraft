@@ -1,0 +1,6 @@
+<?php
+// Chiave master del server per GradeCraft.
+// Questo file è un esempio: copialo in server_key.php e sostituisci il placeholder
+// con una chiave esadecimale di 64 caratteri (32 byte).
+// In produzione, il file viene generato automaticamente al primo avvio.
+return '0000000000000000000000000000000000000000000000000000000000000000';
