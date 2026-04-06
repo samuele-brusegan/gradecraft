@@ -596,3 +596,13 @@ body.drawer-open .b-navbar {
     }
 }
 
+.cvv-sync-form {
+    background: var(--card-bg);
+    position: absolute;
+    top: 2em;
+    right: 10px;
+    border-radius: 1rem;
+    /* box-shadow: 0 10px 20px #0004; */
+    box-shadow: 0 10px 20px #51515173;
+    z-index: 128;
+}

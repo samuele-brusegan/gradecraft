@@ -36,8 +36,6 @@ require_once BASE_PATH . '/app/core/cvv/collegamenti.php';
 require_once BASE_PATH . '/app/core/cvv/ClassevivaIntegration.php';
 require_once BASE_PATH . '/app/controllers/ApiController.php';
 
-checkSessionExpiration();
-
 // Determina l'anno scolastico (da .env se presente, altrimenti default '24')
 $year = ''; // default
 if (file_exists(BASE_PATH . '/.env')) {
@@ -58,14 +56,15 @@ define('CLASSEVIVA_YEAR', $year);
 // Inizializza CVV_URLS global
 $GLOBALS['CVV_URLS'] = new Collegamenti();
 $GLOBALS['CVV_URLS']->setGeneric('year', $year);
-error_log("CVV_URLS after setGeneric: base=" . $GLOBALS['CVV_URLS']->base . " login=" . $GLOBALS['CVV_URLS']->collegamenti['login']);
 
 // Inizializza CVV_API global
 $GLOBALS['CVV_API'] = new CvvIntegration();
 
-// Carica utente in sessione
+// Carica utente in sessione (o fa autoload da CredentialStore)
 define("USR", $GLOBALS['CVV_API']->loadUser());
 
+// Controlla scadenza sessione e re-login se necessario
+checkSessionExpiration();
 
 // Inizializza il router
 $router = new Router();
@@ -76,17 +75,25 @@ require BASE_PATH . '/public/routes.php';
 // Ottieni l'URL richiesto e fai partire il router
 $url = $_SERVER['REQUEST_URI'];
 $router->dispatch($url);
+
+// Non renderizzare HTML dopo il dispatch se si tratta di una API call
+$isApi = (parse_url($url, PHP_URL_PATH) === '/api' || parse_url($url, PHP_URL_PATH) === '/login');
+if ($isApi) {
+    exit;
+}
 ?>
 
 <script type="module">
-    import { IndexedDBService } from './js/dbApi.js';
+    import { IndexedDBService } from '/js/dbApi.js';
     // Inizializza il database all'avvio dell'applicazione
     const dbService = new IndexedDBService('gradecraft', 1, {
         grades: { keyPath: 'ident', autoIncrement: true },
+        agendaAnnotations: {},
     })
     async function initDB() {
         try {
             await dbService.init('grades');
+            await dbService.init('agendaAnnotations');
             console.log('Database IndexedDB pronto!', 'success');
         } catch (error) {
             console.log(`Errore nell'inizializzazione del database: ${error.message}`, 'error');

@@ -10,11 +10,8 @@ namespace cvv;
 
 include_once 'collegamenti.php';
 include_once 'apiMethods.php';
-// $c = \CVV_URLS;
 
 class User {
-    //--------------
-    //private $base_url = 'https://web.spaggiari.eu/rest/v1';
     public string $uid;
     public string $pwd;
     public string $ident = '';
@@ -30,25 +27,12 @@ class User {
     public string $tokenAP;
 
 
-    /**
-     * Initializes a new instance of the class and assigns the provided username and password.
-     *
-     * @param string|null $username The username for authentication. Defaults to null if not provided.
-     * @param string|null $password The password for authentication. Defaults to null if not provided.
-     * @return void
-     */
     public function __construct(string $username = null, string $password = null) {
         $this->uid = $username;
         $this->pwd = $password;
     }
 
 
-    /**
-     * Sends an HTTP request to the specified URL using cURL, with predefined headers for authentication and content type.
-     *
-     * @param string $url The URL to which the request is sent.
-     * @return mixed Returns the decoded JSON response if the HTTP status code is 200. Otherwise, returns an associative array containing the status code, raw response message, URL, headers, and response body.
-     */
     private function sendRequest(string $url, bool $isPost = false, string $request = null): mixed {
         if (API_DETACH) return ["error" => "API_DETACH", "message" => "API_DETACHED"];
         $headers = [
@@ -63,10 +47,11 @@ class User {
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
         curl_close($ch);
 
-        // Log per debug
-        error_log("Classeviva API: URL=$url, HTTP=$httpCode");
+        error_log("Classeviva API: URL=$url, HTTP=$httpCode, cURL_error=$curlError, cURL_errno=$curlErrno");
         if ($httpCode != 200) {
             error_log("Classeviva API ERROR response: " . substr($response, 0, 500));
         }
@@ -86,12 +71,13 @@ class User {
             }
             return $decoded;
         }
-        return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response];
+        return ["error" => "HTTP_CODE_DIFFERS_FROM_200", "status" => $httpCode, "message" => $response, "url" => $url, "headers" => $headers, "body" => $response, "curl_error" => $curlError, "curl_errno" => $curlErrno];
     }
 
     public function login(): string|false {
         $c = $GLOBALS['CVV_URLS'];
         $url = $c->collegamenti['login'];
+        error_log("User::login() - attempting login, uid={$this->uid}, uid_len=" . strlen($this->uid) . ", pwd_len=" . strlen($this->pwd));
         $headers = [
             'User-Agent: ' . $this->user_agent,
             'Content-Type: application/json',
@@ -102,14 +88,35 @@ class User {
             'pass' => $this->pwd,
             'uid' => $this->uid
         ]);
+        // DEBUG: write cURL debug to file to avoid Docker log truncation
+        $verboseFile = '/tmp/curl_login_debug.log';
+        $verbose = fopen($verboseFile, 'w');
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        curl_setopt($ch, CURLOPT_STDERR, $verbose);
+        curl_setopt($ch, CURLINFO_HEADER_OUT, true);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        error_log("User::login() - uid={$this->uid}, HTTP=$httpCode, url=$url");
+        $sentHeaders = curl_getinfo($ch, CURLINFO_HEADER_OUT);
+
+        // Write everything to file
+        $debug = "=== CURL VERBOSE LOGIN DEBUG ===\n";
+        $debug .= "--- REQUEST BODY ---\n" . $body . "\n";
+        $debug .= "--- HEADERS ARRAY ---\n" . print_r($headers, true) . "\n";
+        $debug .= "--- SENT HEADERS ---\n" . $sentHeaders . "\n";
+        $debug .= "--- CURL FULL INFO ---\n" . json_encode(curl_getinfo($ch), JSON_PRETTY_PRINT) . "\n";
+        fclose($verbose);
+        $debug .= "--- VERBOSE LOG (from file) ---\n" . file_get_contents($verboseFile) . "\n";
+        $debug .= "--- RESPONSE ($httpCode) ---\n" . ($response ?? '(empty)') . "\n";
+        $debug .= "=== END CURL VERBOSE LOGIN DEBUG ===\n";
+        file_put_contents($verboseFile, $debug);
+
+        error_log("CURL LOGIN DEBUG WRITTEN TO /tmp/curl_login_debug.log (HTTP=$httpCode)");
 
         curl_close($ch);
         $this->last_login_response = [
@@ -126,7 +133,6 @@ class User {
                 preg_match('/\d+/', $data['ident'], $matches);
                 $this->ident = $matches[0];
                 $this->token = $data['token'];
-                //print_r($data);
                 $this->expDt = $data['expire'];
                 $this->reqDt = $data['release'];
                 $this->firstName = $data['firstName'];
@@ -152,10 +158,7 @@ class User {
         $c->setIdent($this->ident);
         $url = $c->collegamenti[$request];
 
-//        echo "<pre>"; echo $url . " | ". var_export($isPost, true) . " | " . $request; echo "</pre>";
-
         $tmp = $this->sendRequest($url, $isPost, $request);
-    //    echo "<pre>"; print_r($tmp); echo "</pre>";
         return $tmp;
     }
 

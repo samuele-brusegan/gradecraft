@@ -35,6 +35,7 @@ foreach ($events as $ev) {
             <div class="my-card" style="margin: 0 1rem; padding: 1rem;">
                 <p style="color: var(--grade-red); margin: 0;">Errore: <?= htmlspecialchars($error) ?></p>
             </div>
+            <?php include BASE_PATH . '/app/views/partials/api_debug.php'; ?>
         <?php else: ?>
             <!-- Statistiche -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; padding: 0 1rem; margin-bottom: 1rem;">

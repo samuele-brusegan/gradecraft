@@ -9,6 +9,8 @@ global $router;
 // === API ===
 $router->add('/api'     , 'ApiController', 'classeviva');
 $router->add('/login'   , 'ApiController', 'login');
+$router->add('/debug/api'       , 'ApiController', 'classevivaDebugIndex');
+$router->add('/debug/api/:method', 'ApiController', 'classevivaDebug');
 
 // === Pagine ===
 $router->add('/'             , 'Controller', 'index');
@@ -17,6 +19,7 @@ $router->add('/grades/subject/:id', 'Controller', 'gradeSubject');
 $router->add('/settings'     , 'Controller', 'settings');
 $router->add('/account'      , 'Controller', 'account');
 $router->add('/subjects'     , 'Controller', 'subjects');
+$router->add('/agenda/calendar'     , 'Controller', 'agendaCalendar');
 $router->add('/agenda'       , 'Controller', 'agenda');
 $router->add('/absences'     , 'Controller', 'absences');
 $router->add('/notes'        , 'Controller', 'notes');

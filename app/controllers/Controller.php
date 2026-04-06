@@ -215,11 +215,13 @@ class Controller {
 
     public function absences(): void {
         $error = null;
+        $apiError = null;
         $events = [];
         try {
             $raw = $this->requestToApi('assenze');
             if (isset($raw['error'])) {
                 $error = $raw['error'];
+                $apiError = ($raw['error'] === 'HTTP_CODE_DIFFERS_FROM_200') ? $raw : null;
             } else {
                 $events = is_array($raw) ? $raw : [];
                 // Categorize each event
@@ -247,6 +249,7 @@ class Controller {
 
     public function notes(): void {
         $error = null;
+        $apiError = null;
         $noteTypes = [
             'NTTE' => 'Annotazione Insegnante',
             'NTCL' => 'Annotazione Generale',
@@ -258,6 +261,7 @@ class Controller {
             $raw = $this->requestToApi('note');
             if (isset($raw['error'])) {
                 $error = $raw['error'];
+                $apiError = ($raw['error'] === 'HTTP_CODE_DIFFERS_FROM_200') ? $raw : null;
             } else {
                 foreach ($noteTypes as $typeKey => $typeLabel) {
                     if (!empty($raw[$typeKey]) && is_array($raw[$typeKey])) {
@@ -278,12 +282,14 @@ class Controller {
 
     public function documents(): void {
         $error = null;
+        $apiError = null;
         $documents = [];
         $schoolReports = [];
         try {
             $raw = $this->requestToApi('documenti');
             if (isset($raw['error'])) {
                 $error = $raw['error'];
+                $apiError = ($raw['error'] === 'HTTP_CODE_DIFFERS_FROM_200') ? $raw : null;
             } else {
                 $documents = $raw['documents'] ?? [];
                 $schoolReports = $raw['schoolReports'] ?? [];
@@ -296,11 +302,13 @@ class Controller {
 
     public function noticeboard(): void {
         $error = null;
+        $apiError = null;
         $items = [];
         try {
             $raw = $this->requestToApi('bacheca');
             if (isset($raw['error'])) {
                 $error = $raw['error'];
+                $apiError = ($raw['error'] === 'HTTP_CODE_DIFFERS_FROM_200') ? $raw : null;
             } else {
                 $items = $raw ?? [];
                 usort($items, function($a, $b) {
@@ -317,6 +325,7 @@ class Controller {
 
     public function noticeboardRead(): void {
         $error = null;
+        $apiError = null;
         $item = null;
         $evtCode = $_GET['evtCode'] ?? '';
         $pubId   = $_GET['pubId'] ?? '';
@@ -340,6 +349,7 @@ class Controller {
             ]);
             if (isset($raw['error'])) {
                 $error = $raw['error'];
+                $apiError = ($raw['error'] === 'HTTP_CODE_DIFFERS_FROM_200') ? $raw : null;
             } else {
                 // Unisci: i metadati della card hanno priorità per title/attachments,
                 // il dettaglio per il testo
@@ -397,11 +407,13 @@ class Controller {
 
     public function calendar(): void {
         $error = null;
+        $apiError = null;
         $calendar = [];
         try {
             $raw = $this->requestToApi('calendario');
             if (isset($raw['error'])) {
                 $error = $raw['error'];
+                $apiError = ($raw['error'] === 'HTTP_CODE_DIFFERS_FROM_200') ? $raw : null;
             } else {
                 $calendar = $raw ?? [];
             }
@@ -412,6 +424,17 @@ class Controller {
     }
 
     public function settings(): void {
+        // Recupera lista materie per il pannello argomenti
+        $subjectsList = [];
+        try {
+            $subjectsRaw = $this->requestToApi('subjects');
+            foreach ($subjectsRaw as $s) {
+                if (is_array($s) && isset($s['id'], $s['description'])) {
+                    $subjectsList[$s['id']] = $s['description'];
+                }
+            }
+        } catch (Exception $e) {}
+
         require_once BASE_PATH . '/app/views/settings.php';
     }
 
@@ -430,6 +453,55 @@ class Controller {
                         $response = ["error" => "API_ERROR"];
         }
         require_once BASE_PATH . '/app/views/subjects.php';
+    }
+    public function agendaCalendar(): void {
+        $error = null;
+        $allEvents = [];
+
+        try {
+            // Recupero eventi degli ultimi 2 mesi e prossimi 2 mesi
+            $now = new DateTime();
+            $from = (clone $now)->modify('-1 month')->format('Ymd');
+            $to = (clone $now)->modify('+2 months')->format('Ymd');
+
+            $overview = $this->requestToApi('overview', [
+                'date_from' => $from,
+                'date_to'   => $to,
+            ]);
+
+            $lessons = $overview['lessons'] ?? [];
+            $agenda = $overview['agenda'] ?? [];
+
+            // Unisco tutti gli eventi e li raggruppo per data
+            $byDate = [];
+            foreach ($lessons as $l) {
+                $d = $l['evtDate'] ?? '';
+                if ($d) {
+                    if (!isset($byDate[$d])) $byDate[$d] = ['lessons' => [], 'agenda' => []];
+                    $byDate[$d]['lessons'][] = $l;
+                }
+            }
+            foreach ($agenda as $a) {
+                // Gli eventi agenda possono avere date diverse (evtDatetimeBegin)
+                $d = '';
+                if (!empty($a['evtDate'])) {
+                    $d = $a['evtDate'];
+                } elseif (!empty($a['evtDatetimeBegin'])) {
+                    try { $d = (new DateTime($a['evtDatetimeBegin']))->format('Y-m-d'); } catch (Exception $e) {}
+                }
+                if ($d) {
+                    if (!isset($byDate[$d])) $byDate[$d] = ['lessons' => [], 'agenda' => []];
+                    $byDate[$d]['agenda'][] = $a;
+                }
+            }
+
+            $allEvents = $byDate;
+
+        } catch (Exception $e) {
+            $error = 'API_ERROR';
+        }
+
+        require_once BASE_PATH . '/app/views/agenda_calendar.php';
     }
     public function agenda(): void {
         $error = null;
@@ -469,12 +541,9 @@ class Controller {
 
     /**
      * Makes an API call using the provided request key.
-     *
-     * @param string $rq The request key used to retrieve API configuration details.
-     * @return array Returns the API response as a string on success or false if the response cannot be retrieved.
-     * @throws Exception If the HTTP response code differs from 200, throwing an exception with error details.
+     * Automatically retries once with token refresh if 401 is returned.
      */
-    private function requestToApi(string $rq, array $extraInput=[]): array {
+    private function requestToApi(string $rq, array $extraInput=[], bool $retry = false): array {
         global $methods;
         if (!isset($methods[$rq])) {
             return ['error' => 'INVALID_API_REQUEST', 'message' => "API request '{$rq}' not found"];
@@ -491,7 +560,30 @@ class Controller {
             'cvvArrKey' => $cvvArrKey,
             'isPost' => $requestMethod === "POST",
         ];
-        return $apiCtrl->classeviva($data, false, true);
-//        return [];
+        $response = $apiCtrl->classeviva($data, false, true);
+
+        // Se errore auth e non ho ancora ritentato, faccio re-login e riprovo
+        if (isset($response['error']) && in_array($response['error'], ['NOT_LOGGED_IN', 'HTTP_CODE_DIFFERS_FROM_200'], true) && !$retry) {
+            // Se il re-login ha distrutto la sessione (WRONG_CREDENTIALS), non retryare
+            if (!isset($_SESSION['classeviva_ident']) && !isset($_SESSION['classeviva_auth_token'])) {
+                return $response;
+            }
+            $result = loginRequest();
+            // Se il re-login è fallito, restituisci l'errore originale
+            if (is_array($result) && isset($result['error'])) {
+                return $result;
+            }
+            // Ricarica l'utente CVV con il nuovo token
+            if (isset($_SESSION['classeviva_ident'])) {
+                $cvvApi = $GLOBALS['CVV_API'];
+                $cvvApi->usr->token = $_SESSION['classeviva_auth_token'];
+                $cvvApi->usr->ident = $_SESSION['classeviva_ident'];
+                $cvvApi->usr->is_logged_in = true;
+                $cvvApi->usr->expDt = $_SESSION['classeviva_session_expiration_date'];
+            }
+            return $this->requestToApi($rq, $extraInput, true);
+        }
+
+        return $response;
     }
 }

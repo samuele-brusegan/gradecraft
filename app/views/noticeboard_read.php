@@ -36,6 +36,7 @@
             <div class="my-card" style="margin: 0 1rem; padding: 1rem;">
                 <p style="color: var(--grade-red); margin: 0;">Errore: <?= htmlspecialchars($error) ?></p>
             </div>
+            <?php include BASE_PATH . '/app/views/partials/api_debug.php'; ?>
         <?php elseif ($item): ?>
 
             <?php
@@ -50,7 +51,6 @@
             $hasText = !empty($textDisplay);
             ?>
 
-            <!-- Testo -->
             <?php if ($hasText): ?>
                 <div class="my-card" style="margin: 0 1rem 1rem; padding: 1.5rem;">
                     <p style="color: var(--text-primary); line-height: 1.7; white-space: pre-wrap;">
@@ -75,7 +75,7 @@
                                     <span class="material-symbols-outlined" style="font-size: 1.2rem; vertical-align: middle; margin-right: 0.3rem; color: var(--grade-red);">picture_as_pdf</span>
                                     <?= htmlspecialchars($filename) ?>
                                 </span>
-                                <div style="display: flex; gap: 0.5rem;">
+                                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                     <button onclick="loadPdf('<?= $attachNum ?>')" style="font-size: 0.8rem; padding: 0.3rem 0.7rem; border: none; border-radius: 0.5rem; background: var(--accent-blue); color: white; cursor: pointer;">
                                         <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle;">file_open</span> Apri
                                     </button>
@@ -175,7 +175,5 @@
         }
     };
     </script>
-
-    <?php include COMMON_HTML_FOOT ?>
 </body>
 </html>

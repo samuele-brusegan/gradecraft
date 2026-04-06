@@ -161,14 +161,23 @@ unset($p);
 
         <!-- Lista Compiti (Materie) -->
         <section class="subject-list" style="padding: 0 1rem 5rem;">
-            <h2 style="font-size: 1.5rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text-primary);">
-                Materie
-            </h2>
+            <div style="display: flex; align-items: baseline; justify-content: space-between; margin: 1rem 0 0.5rem;">
+                <h2 style="font-size: 1.5rem; font-weight: 600; margin: 0; color: var(--text-primary);">
+                    Materie
+                </h2>
+                <a href="/subjects" style="font-size: 0.9rem; color: var(--accent-blue); text-decoration: none;">Vedi Altro &rsaquo;</a>
+            </div>
             <?php if (isset($response['subjects']) && !isset($response['subjects']['error']) && count($response['subjects']) > 0): ?>
-                <?php foreach ($response['subjects'] as $subject):
+                <?php
+                    $signedSubjects = array_filter($response['subjects'], function($s) {
+                        return !empty($s['teachers']);
+                    });
+                    $recentSigned = array_slice(array_reverse($signedSubjects), 0, 3);
+                    $recentSigned = array_reverse($recentSigned);
+                ?>
+                <?php foreach ($recentSigned as $subject):
                     $id = $subject['id'];
-                    $name = $subject['description'];
-                    $order = $subject['order'];
+                    $name = ($subject['id'] == '215883') ? 'TPSIT' : $subject['description'];
                     $profs = $subject['teachers'];
                     $profList = implode(', ', array_column($profs, 'teacherName'));
                     $desc = $profList ?: 'Nessun docente';

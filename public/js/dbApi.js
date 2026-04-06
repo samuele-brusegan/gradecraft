@@ -8,31 +8,56 @@ export class IndexedDBService {
     constructor(dbName, version, objectStoresConfig) {
         this.dbName = dbName;
         this.version = version;
-        this.db = null; // Il riferimento al database IndexedDB
-        this.objectStoresConfig = objectStoresConfig; // Configurazione degli object store
+        this.objectStoresConfig = objectStoresConfig;
+        this._dbPromise = null;
     }
 
     /**
-     * Initializes the database and creates an object store if it does not already exist.
-     *
-     * @param {string} table - The name of the table (object store) to be created or accessed in the database.
-     * @return {Promise<IDBDatabase>} A Promise that resolves to the opened IndexedDB database instance.
+     * Initializes the database and creates all object stores.
+     * Auto-increments version if new stores are needed.
      */
-    async init(table) {
-        this.db = new Promise((resolve, reject) => {
-            const request = indexedDB.open(this.dbName, this.version);
+    async init(specificTable = null) {
+        if (this._dbPromise) return this._dbPromise;
 
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                if (!db.objectStoreNames.contains(table)) {
-                    db.createObjectStore(table, this.objectStoresConfig[table]);
-                }
-            }
+        const stores = specificTable ? [specificTable] : Object.keys(this.objectStoresConfig);
 
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        })
-        return this.db;
+        this._dbPromise = (async () => {
+            // Prima apri per scoprire la versione corrente
+            let currentVersion = this.version;
+            let storeNames = [];
+            await new Promise((resolve) => {
+                const req = indexedDB.open(this.dbName);
+                req.onupgradeneeded = () => {
+                    // DB nuovo, sarà creato con this.version nell'open successivo
+                };
+                req.onsuccess = () => {
+                    currentVersion = req.result.version;
+                    storeNames = Array.from(req.result.objectStoreNames);
+                    req.result.close();
+                };
+                req.onerror = () => resolve();
+            });
+
+            const missingStores = stores.filter(s => !storeNames.includes(s));
+            const version = missingStores.length > 0 ? Math.max(currentVersion, this.version) + 1 : Math.max(currentVersion, this.version);
+
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(this.dbName, version);
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    const allStores = Object.keys(this.objectStoresConfig);
+                    for (const table of allStores) {
+                        if (!db.objectStoreNames.contains(table)) {
+                            db.createObjectStore(table, this.objectStoresConfig[table]);
+                        }
+                    }
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        })();
+
+        return this._dbPromise;
     }
 
     /**
@@ -50,6 +75,60 @@ export class IndexedDBService {
 
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
-        })
+        });
+    }
+
+    // === Agenda Annotations ===
+
+    async getAnnotation(eventId) {
+        const db = await this.init('agendaAnnotations');
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('agendaAnnotations', 'readonly');
+            const req = tx.objectStore('agendaAnnotations').get(eventId);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async saveAnnotation(eventId, data) {
+        const db = await this.init('agendaAnnotations');
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('agendaAnnotations', 'readwrite');
+            tx.objectStore('agendaAnnotations').put({ id: eventId, ...data }, eventId);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async removeAnnotation(eventId) {
+        const db = await this.init('agendaAnnotations');
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction('agendaAnnotations', 'readwrite');
+            tx.objectStore('agendaAnnotations').delete(eventId);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+        });
+    }
+
+    async getAllAnnotations() {
+        const all = await this.getAll('agendaAnnotations');
+        const result = {};
+        for (const item of all) {
+            const { id, ...rest } = item;
+            result[id] = rest;
+        }
+        return result;
+    }
+
+    async exportAnnotations() {
+        const annotations = await this.getAllAnnotations();
+        return JSON.stringify(annotations, null, 2);
+    }
+
+    async importAnnotations(jsonString) {
+        const data = JSON.parse(jsonString);
+        for (const [id, item] of Object.entries(data)) {
+            await this.saveAnnotation(id, item);
+        }
     }
 }

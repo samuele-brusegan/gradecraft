@@ -14,7 +14,7 @@ include_once 'collegamenti.php';
 // $c = CVV_URLS;
 
 class CvvIntegration {
-    private User $usr;
+    public User $usr;
 
     public function __construct() {}
     public function createUser($username, $password): User {

@@ -39,7 +39,7 @@ Collegamenti (URL builder) → Classeviva API
 - 404 handling includes common layout
 
 **Controllers** (`app/controllers/`):
-- `Controller.php`: Main page controllers (dashboard, grades, gradeSubject, absences, notes, documents, noticeboard, noticeboardRead, noticeboardAttach, calendar, settings, settingsJson, agenda, subjects, account)
+- `Controller.php`: Main page controllers (dashboard, grades, gradeSubject, absences, notes, documents, noticeboard, noticeboardRead, noticeboardAttach, calendar, settings, settingsJson, agenda, agendaCalendar, subjects, account)
 - `ApiController.php`: JSON API endpoints + login handler (also handles logout via `action=logout` POST param)
 - Controller uses `requestToApi()` helper to call Classeviva APIs
 
@@ -64,6 +64,7 @@ const CLASSEVIVA_YEAR: defines academic year suffix, read from .env with default
 ```
 
 **Debug Mode**: Toggle `$_SESSION['show_json_debug']` via `/settings/json` — displays raw JSON API responses in every view card.
+**Debug API**: `/debug/api` — lista di tutti gli endpoint; `/debug/api/:methodName` — JSON raw non filtrato da Classeviva (senza estrazione cvvArrKey).
 
 **Frontend** (`public/`):
 - ES6 module in `js/dbApi.js` (IndexedDB service with `attachments` store for noticeboard)
@@ -133,6 +134,22 @@ No SQL database. Uses:
 5. **Noticeboard attachments**: `bachecaAllegato` uses `particularDataParse: "PDF"` — `User::sendRequest` wraps raw response as `["pdfData" => $response]`
 6. **Frontend resources**: All CSS/JS/component paths in `head.php` must be absolute (`/css/...`, `/components/...`) to work from nested routes
 
+## API Response Key Mappings
+
+### Lessons evtCode (lessons API, overview API)
+| Code | Tipo | Descrizione |
+|------|------|-------------|
+| LSF0 | Lezione Frontale | 112/167 |
+| LSS0 | Sostituzione | Docente sostituto |
+| LSC0 | Laboratorio | Compresenza/Lab |
+
+### Agenda evtCode (agenda API, overview API)
+| Code | Tipo | Descrizione |
+|------|------|-------------|
+| AGNT | Notes | Note/annunci (non compiti) |
+| AGHW | Homework | Compiti assegnati |
+| AGCR | Create | Altri eventi creati in agenda |
+
 ## Testing Notes
 
 - No formal test suite
@@ -143,12 +160,15 @@ No SQL database. Uses:
 
 ## Known Issues / TODOs
 
+- **🔴 LOGIN BROKEN**: Login endpoint returns 422 WrongCredentials (see CRITICAL section above)
 - Noticeboard: PDF viewer iframe needs browser-specific sandbox settings (Firefox blocks blob URLs with `sandbox`)
 - Noticeboard attachments: backend `bachecaAllegato` returns raw PDF but CORS/proxy for external downloads may need work
 - Agenda multi-day event handling in time string logic
-- `index.php` trailing `<script type="module">` can cause 404 from nested routes
+- `agenda_calendar.php` was missing `<!DOCTYPE html>` (fixed 2026-04-05)
 - `functions.php` typo: `reLoginOffest` → `reLoginOffset`
 - Frontend graphs use hardcoded sample data in some places
+- DNS resolution failures inside PHP-FPM for `gradecraft.test` (fixed by using in-process API calls instead of HTTP round-trip in `loginRequest()`)
+- IndexedDB version mismatch error: "stored database is a higher version than requested" (fixed by reading current DB version before opening)
 
 ## Security Considerations
 
@@ -167,3 +187,39 @@ No SQL database. Uses:
 4. Configure web server for PHP with proper permissions on session directory
 5. Enable HTTPS (required by Classeviva API)
 6. Consider moving configuration to environment variables (currently hardcoded)
+
+## 🔴 CRITICAL: Login 422 — Currently Broken (2026-04-05)
+
+**Status**: Classeviva login returns HTTP 422 `WrongCredentials:r` for ALL login attempts, including valid credentials.
+
+**Symptoms**:
+- `ApiController::login()` (form-based) → 422
+- `User::login()` (programmatic via CredentialStore) → 422
+- Direct `curl` to the login endpoint → 422
+- A vibecoded version using the **same endpoint, same api_key, same body format, same credentials** — **WORKS**
+
+**What we verified**:
+- `api_key` is correct (`Tg1NWEwNGIgIC0K`) — identical in committed vs current code
+- Login URL is correct (`https://web{year}.spaggiari.eu/rest/v1/auth/login`)
+- Request body format is correct (`{"ident":null,"pass":"...","uid":"..."}`)
+- User-Agent is correct (`CVVS/std/4.1.7 Android/10`)
+- Headers are correct
+- Git diff of `app/core/cvv/User.php` shows **only cosmetic changes** (removed docstrings, added newline) — **no functional changes to login**
+- Container DNS resolves `web.spaggiari.eu` correctly
+- Container can reach the endpoint (gets 422, not connection refused)
+
+**What we tried**:
+- Restarted containers
+- Rewrote `loginRequest()` in `functions.php` to bypass HTTP and use in-process CVV classes
+- Added auto-retry in `requestToApi()` for 401/NOT_LOGGED_IN errors
+- Made `$usr` property public on `CvvIntegration` (was private)
+- Added credential cleanup on WrongCredentials
+- Tested direct curl from outside container → same 422 with test creds
+
+**Hypotheses remaining**:
+1. Something in the container PHP-FPM image/curl version behaves differently than the vibecoded environment (Node.js?)
+2. The `Host` header or some cURL option is missing/different
+3. The PHP cURL library sends something different from the vibecoded HTTP client
+4. There's a subtle encoding/format difference in the request body
+
+**Debug priority**: Compare the **exact HTTP request** sent by the working vibecoded version vs our cURL request. Look for differences in headers, body format, or TLS/cipher details.

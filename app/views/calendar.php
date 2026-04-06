@@ -58,6 +58,7 @@ ksort($gruppoPerMese);
             <div class="my-card" style="margin: 0 1rem; padding: 1rem;">
                 <p style="color: var(--grade-red); margin: 0;">Errore: <?= htmlspecialchars($error) ?></p>
             </div>
+            <?php include BASE_PATH . '/app/views/partials/api_debug.php'; ?>
         <?php elseif (empty($gruppoPerMese)): ?>
             <div class="my-card" style="margin: 0 1rem; padding: 1rem;">
                 <p style="color: var(--text-secondary); margin: 0;">Nessun dato del calendario disponibile.</p>

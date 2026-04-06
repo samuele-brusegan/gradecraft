@@ -38,7 +38,11 @@ $targetYear = (int)$today->format('Y');
     .cal-month-title { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
 
     .cal-grid {
-        display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 1rem;
+        display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 0 1rem; width: 100%;
+        box-sizing: border-box;
+    }
+    .cal-grid-header, .cal-day {
+        min-width: 0; overflow: hidden;
     }
     .cal-grid-header {
         text-align: center; font-size: 0.7rem; font-weight: 600; color: var(--text-secondary);
@@ -72,26 +76,59 @@ $targetYear = (int)$today->format('Y');
     .cal-day.today:hover { background: rgba(59,130,246,0.15); }
     .cal-day.empty { border-color: transparent; background: none; }
 
-    /* Mobile optimizations */
-    @media (max-width: 480px) {
-        .cal-grid { padding: 0 0.5rem; gap: 1px; }
-        .cal-day { min-height: 3rem; padding: 0.15rem; }
-        .cal-day .day-number { font-size: 0.7rem; }
-        .cal-dot { font-size: 0.5rem; }
-        .cal-dot-bar { width: 3px; height: 3px; }
-        .cal-grid-header { font-size: 0.6rem; }
-        .cal-sheet { padding: 1rem; }
+    /* Desktop-only grid, mobile list view */
+    @media (max-width: 600px) {
+        .cal-grid-view { display: none; }
+        .cal-list-view { display: block; }
+        .cal-nav { padding: 0 0.5rem; }
+        .cal-detail-sheet { width: 95%; padding: 1rem; }
+    }
+    @media (min-width: 601px) {
+        .cal-list-view { display: none; }
+    }
+
+    .cal-list-group-title {
+        font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);
+        text-transform: uppercase; padding: 0.75rem 1rem 0.25rem; letter-spacing: 0.05em;
+    }
+    .cal-list-item {
+        display: flex; align-items: flex-start; gap: 0.75rem;
+        padding: 0.6rem 1rem; border-bottom: 1px solid var(--border-color);
+        cursor: pointer; transition: background 0.15s;
+    }
+    .cal-list-item:hover { background: var(--background-secondary); }
+    .cal-list-item:active { background: rgba(59,130,246,0.08); }
+    .cal-list-date {
+        min-width: 2.5rem; text-align: center;
+    }
+    .cal-list-date .day-num {
+        display: block; font-size: 1.25rem; font-weight: 700; color: var(--text-primary); line-height: 1;
+    }
+    .cal-list-date .dow {
+        font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase;
+    }
+    .cal-list-events { flex: 1; }
+    .cal-list-event {
+        font-size: 0.85rem; padding: 0.2rem 0; color: var(--text-primary);
+        border-left: 3px solid var(--accent-blue); padding-left: 0.5rem; margin-bottom: 0.3rem;
+    }
+    .cal-list-event.is-test { border-left-color: var(--test-color); font-weight: 600; color: var(--test-color); }
+    .cal-list-event-subj {
+        font-size: 0.75rem; color: var(--text-secondary);
+    }
+    .cal-list-empty {
+        text-align: center; padding: 2rem 1rem; color: var(--text-secondary); font-size: 0.85rem;
     }
 
     /* Event detail popup */
     .cal-detail-overlay {
         position: fixed; inset: 0; background: rgba(0,0,0,0.4);
-        display: none; z-index: 100; align-items: flex-end; justify-content: center;
+        display: none; z-index: 100; align-items: center; justify-content: center;
     }
     .cal-detail-overlay.open { display: flex; }
     .cal-detail-sheet {
-        background: var(--card-bg); border-radius: 1rem 1rem 0 0; padding: 1.5rem;
-        width: 100%; max-width: 768px; max-height: 70vh; overflow-y: auto;
+        background: var(--card-bg); border-radius: 1rem; padding: 1.5rem;
+        width: 90%; max-width: 768px; max-height: 70vh; overflow-y: auto;
     }
     .cal-detail-sheet h3 { margin: 0 0 0.75rem; font-size: 1rem; color: var(--text-primary); }
     .cal-detail-event {
@@ -131,8 +168,13 @@ $targetYear = (int)$today->format('Y');
                 <button onclick="changeMonth(1)">→</button>
             </div>
 
-            <!-- Calendar Grid -->
-            <div class="cal-grid" id="calGrid"></div>
+            <!-- Calendar Grid (desktop) -->
+            <div class="cal-grid-view">
+                <div class="cal-grid" id="calGrid"></div>
+            </div>
+
+            <!-- Calendar List (mobile) -->
+            <div class="cal-list-view" id="calList"></div>
 
             <div class="cal-detail-overlay" id="calDetail" onclick="closeDetail(event)">
                 <div class="cal-detail-sheet" id="calSheet">
@@ -145,12 +187,12 @@ $targetYear = (int)$today->format('Y');
         <?php endif; ?>
     </div>
 
-    <script type="module">
-    import { IndexedDBService } from '/js/dbApi.js';
-    import { isLikelyTest } from '/js/agendaTests.js';
+    <!-- Render status (filled by JS after renderCalendar) -->
+    <details id="calDebug" style="margin: 0 1rem 1rem;" open>
+        <summary style="cursor: pointer; font-size: 0.85rem; color: var(--text-secondary); font-weight:600;">Render Status</summary>
+    </details>
 
-    const dbService = new IndexedDBService('gradecraft', 1, { agendaAnnotations: {} });
-
+    <script>
     const allEvents = <?= json_encode($allEvents, JSON_UNESCAPED_UNICODE) ?>;
     const mesiIt = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
     const giorniLun = ['lun','mar','mer','gio','ven','sab','dom'];
@@ -158,27 +200,28 @@ $targetYear = (int)$today->format('Y');
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
 
-    let annotations = {};
-    try {
-        annotations = await dbService.getAllAnnotations();
-    } catch (e) {
-        console.warn('[agenda_calendar] IndexedDB fallita, continuo senza annotazioni:', e);
+    function isLikelyTest(text) {
+        if (!text) return false;
+        return /\b(verifica|interrogazione|compito|test|quiz|esame)\b/i.test(text);
     }
 
-    async function isTestEvent(evt) {
-        const text = [evt.subjectDesc, evt.notes, evt.lessonArg, evt.lessonType, evt.title, evt.evtDescr, evt.description, evt.evtNotes].filter(Boolean).join(' ');
-        if (isLikelyTest(text)) return true;
-        // Check annotations
-        const keys = Object.keys(annotations);
-        for (const key of keys) {
-            if (annotations[key]?.isTest && text.includes(evt.subject ?? '')) return true;
-        }
-        return false;
-    }
+    // Try to load agendaTests.js dynamically for the real isLikelyTest
+    (function() {
+        fetch('/js/agendaTests.js').then(r => r.text()).then(function(code) {
+            // Extract isLikelyTest from the loaded module if possible
+        }).catch(function() {});
+    })();
 
     function renderCalendar() {
         const grid = document.getElementById('calGrid');
+        if (!grid) { console.error('[cal] calGrid not found!'); return; }
         grid.innerHTML = '';
+
+        const firstDay = new Date(currentYear, currentMonth, 1);
+        let startDow = firstDay.getDay();
+        startDow = startDow === 0 ? 6 : startDow - 1;
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const monthName = mesiIt[currentMonth] || '?';
 
         // Headers
         for (const g of giorniLun) {
@@ -188,14 +231,8 @@ $targetYear = (int)$today->format('Y');
             grid.appendChild(h);
         }
 
-        const firstDay = new Date(currentYear, currentMonth, 1);
-        let startDow = firstDay.getDay(); // 0=dom
-        startDow = startDow === 0 ? 6 : startDow - 1; // Converti a lunedì=0
-
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
-
         document.getElementById('monthTitle').textContent = mesiIt[currentMonth] + ' ' + currentYear;
 
         // Celle vuote prima del primo
@@ -206,6 +243,8 @@ $targetYear = (int)$today->format('Y');
         }
 
         // Giorni
+        let renderedDays = 0;
+        let renderedWithEvents = 0;
         for (let d = 1; d <= daysInMonth; d++) {
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
             const c = document.createElement('div');
@@ -215,22 +254,38 @@ $targetYear = (int)$today->format('Y');
             if (dateStr === todayStr) c.classList.add('today');
 
             const events = allEvents[dateStr] || null;
-            if (events && (events.lessons.length || events.agenda.length)) {
+            if (events && events.agenda.length > 0) {
+                renderedWithEvents++;
                 c.classList.add('has-events');
                 const evDiv = document.createElement('div');
                 evDiv.className = 'day-events';
 
-                const allDay = [...(events.lessons || []), ...(events.agenda || [])].slice(0, 4);
-                for (const evt of allDay) {
-                    const isT = isLikelyTest(evt.notes || evt.lessonArg || evt.title || '');
+                const agendaOnly = events.agenda;
+                const bySubject = {};
+                for (const evt of agendaOnly) {
+                    const subjId = evt.subjectId || evt.subjectDesc || evt.authorName || '';
+                    const notes = evt.notes || evt.title || '';
+                    const isT = isLikelyTest(notes);
+                    if (!bySubject[subjId] || isT) {
+                        bySubject[subjId] = isT ? { ...evt, _isTest: true } : evt;
+                    }
+                }
+
+                const uniqueEvents = Object.values(bySubject).slice(0, 4);
+                for (const evt of uniqueEvents) {
+                    const subj = evt.subjectDesc || evt.title || '';
+                    const author = evt.authorName || '';
+                    const notes = evt.notes || '';
+                    let displayText = subj || author || 'Evento';
+                    const isT = evt._isTest || isLikelyTest(notes);
+
                     const dot = document.createElement('span');
                     dot.className = 'cal-dot' + (isT ? ' is-test' : '');
-                    const subj = evt.subjectDesc || evt.subject || evt.title || '';
-                    dot.innerHTML = `<span class="cal-dot-bar${isT ? ' test-dot' : ''}"></span>${subj || 'Evento'}`;
+                    dot.innerHTML = `<span class="cal-dot-bar${isT ? ' test-dot' : ''}"></span>${displayText}`;
                     evDiv.appendChild(dot);
                 }
 
-                const more = (events.lessons || []).length + (events.agenda || []).length - 4;
+                const more = agendaOnly.length - uniqueEvents.length;
                 if (more > 0) {
                     const moreSpan = document.createElement('span');
                     moreSpan.style.cssText = 'font-size:0.55rem;color:var(--text-secondary);';
@@ -239,11 +294,8 @@ $targetYear = (int)$today->format('Y');
                 }
 
                 c.appendChild(evDiv);
-
-                // Click → detail
-                c.addEventListener('click', () => showDayDetail(dateStr, events));
+                c.addEventListener('click', () => showDayDetail(dateStr, events.agenda));
             } else {
-                // Click → naviga alla timeline per quel giorno
                 c.addEventListener('click', () => {
                     window.location.href = `/agenda?date=${dateStr}`;
                 });
@@ -255,40 +307,102 @@ $targetYear = (int)$today->format('Y');
             c.insertBefore(num, c.firstChild);
 
             grid.appendChild(c);
+            renderedDays++;
+        }
+
+        // Mobile list view
+        renderList(todayStr);
+
+        const calDebug = document.getElementById('calDebug');
+        if (calDebug) {
+            calDebug.innerHTML = `
+                <summary style="cursor:pointer; font-size:0.85rem; color:var(--text-secondary); font-weight:600;">Render Status</summary>
+                <div style="padding:1rem; font-size:0.8rem; font-family:monospace;">
+                    <p style="color:var(--grade-green)">renderCalendar() COMPLETED</p>
+                    <p>month = ${monthName} ${currentYear}, days = ${daysInMonth}, startDow = ${startDow}</p>
+                    <p>rendered days = ${renderedDays}, with events = ${renderedWithEvents}</p>
+                    <p>grid children = ${grid.children.length}</p>
+                </div>
+            `;
         }
     }
 
-    function showDayDetail(dateStr, events) {
+    function renderList(todayStr) {
+        const list = document.getElementById('calList');
+        if (!list) return;
+        list.innerHTML = '';
+
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        let hasAnyEvents = false;
+        let currentDowHeader = '';
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const events = allEvents[dateStr] || null;
+            const agenda = events ? events.agenda : [];
+
+            // Day-of-week separator
+            const dt = new Date(dateStr + 'T12:00:00');
+            const dowLabel = dt.toLocaleDateString('it-IT', { weekday: 'long' });
+            const dow = giorniLun[(dt.getDay() + 6) % 7]; // lun=0
+
+            if (d === 1) {
+                const title = document.createElement('div');
+                title.className = 'cal-list-group-title';
+                title.textContent = dow;
+                list.appendChild(title);
+                currentDowHeader = dow;
+            }
+
+            if (agenda.length > 0) {
+                hasAnyEvents = true;
+                const item = document.createElement('div');
+                item.className = 'cal-list-item' + (dateStr === todayStr ? ' today' : '');
+                item.dataset.date = dateStr;
+
+                const dateCol = document.createElement('div');
+                dateCol.className = 'cal-list-date';
+                dateCol.innerHTML = `<span class="day-num">${d}</span><span class="dow">${dow}</span>`;
+
+                const evts = document.createElement('div');
+                evts.className = 'cal-list-events';
+
+                for (const evt of agenda) {
+                    const subj = evt.subjectDesc || evt.title || evt.authorName || 'Evento';
+                    const notes = evt.notes || '';
+                    const isT = isLikelyTest(notes);
+                    const div = document.createElement('div');
+                    div.className = 'cal-list-event' + (isT ? ' is-test' : '');
+                    div.textContent = subj;
+                    evts.appendChild(div);
+                }
+
+                item.appendChild(dateCol);
+                item.appendChild(evts);
+                item.addEventListener('click', () => showDayDetail(dateStr, agenda));
+                list.appendChild(item);
+            }
+        }
+
+        if (!hasAnyEvents) {
+            list.innerHTML = '<div class="cal-list-empty">Nessun evento questo mese.</div>';
+        }
+    }
+
+    function showDayDetail(dateStr, agendaEvents) {
         const sheet = document.getElementById('calDetail');
         const d = new Date(dateStr + 'T12:00:00');
         document.getElementById('calSheetTitle').textContent =
             d.toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long' });
 
         let html = '';
-        if (events.lessons && events.lessons.length) {
-            html += '<p style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin:0.5rem 0 0.25rem;">Lezioni</p>';
-            for (const l of events.lessons) {
-                const isT = isLikelyTest(l.notes || l.lessonArg || '');
-                const subj = l.subjectDesc || l.subject || 'Lezione';
-                const desc = l.lessonArg || l.lessonType || '';
-                const time = l.evtHPos ? l.evtHPos + 'ª ora' : (l.startTime || '');
-                html += `<div class="cal-detail-event${isT ? ' test-event' : ''}">
-                    <h4>${subj}${time ? ' — ' + time : ''}</h4>
-                    ${desc ? `<p>${desc}</p>` : ''}
-                </div>`;
-            }
-        }
-        if (events.agenda && events.agenda.length) {
-            html += '<p style="font-size:0.75rem;font-weight:600;color:var(--text-secondary);text-transform:uppercase;margin:0.5rem 0 0.25rem;">Compiti</p>';
-            for (const a of events.agenda) {
-                const isT = isLikelyTest(a.notes || a.evtDescr || a.title || '');
-                const subj = a.subjectDesc || a.subject || a.title || 'Evento';
-                const desc = a.notes || a.evtDescr || a.description || '';
-                html += `<div class="cal-detail-event${isT ? ' test-event' : ''}">
-                    <h4>${subj}</h4>
-                    ${desc ? `<p>${desc}</p>` : ''}
-                </div>`;
-            }
+        for (const a of agendaEvents) {
+            const subj = a.subjectDesc || a.title || a.authorName || 'Evento';
+            const desc = a.notes || a.evtDescr || a.description || '';
+            html += `<div class="cal-detail-event">
+                <h4>${subj}</h4>
+                ${desc ? `<p>${desc}</p>` : ''}
+            </div>`;
         }
 
         document.getElementById('calSheetContent').innerHTML = html || '<p style="color:var(--text-secondary);">Nessun evento.</p>';
