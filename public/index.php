@@ -17,6 +17,7 @@ require_once BASE_PATH . '/config/CredentialStore.php';
 CryptoHelper::getServerKey();
 
 session_start();
+date_default_timezone_set('Europe/Rome');
 //1 => development; 0 => published
 const URL_PATH = "https://gradecraft.". ((1) ? "test" : "brusegan.it") ;
 const COMMON_HTML_HEAD    = BASE_PATH . '/public/commons/head.php';
