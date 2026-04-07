@@ -140,6 +140,10 @@ $targetYear = (int)$today->format('Y');
     .cal-detail-event.test-event {
         border-left: 3px solid var(--test-color); padding-left: 0.5rem;
     }
+    .test-keyword {
+        color: var(--test-color);
+        font-weight: 600;
+    }
     </style>
 </head>
 <body data-theme="<?=THEME?>">
@@ -192,25 +196,15 @@ $targetYear = (int)$today->format('Y');
         <summary style="cursor: pointer; font-size: 0.85rem; color: var(--text-secondary); font-weight:600;">Render Status</summary>
     </details>
 
-    <script>
+    <script type="module">
+    import { isLikelyTest, getTestKeyword, highlightKeywordInText } from '/js/agendaTests.js';
+
     const allEvents = <?= json_encode($allEvents, JSON_UNESCAPED_UNICODE) ?>;
     const mesiIt = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
     const giorniLun = ['lun','mar','mer','gio','ven','sab','dom'];
 
     let currentMonth = new Date().getMonth();
     let currentYear = new Date().getFullYear();
-
-    function isLikelyTest(text) {
-        if (!text) return false;
-        return /\b(verifica|interrogazione|compito|test|quiz|esame)\b/i.test(text);
-    }
-
-    // Try to load agendaTests.js dynamically for the real isLikelyTest
-    (function() {
-        fetch('/js/agendaTests.js').then(r => r.text()).then(function(code) {
-            // Extract isLikelyTest from the loaded module if possible
-        }).catch(function() {});
-    })();
 
     function renderCalendar() {
         const grid = document.getElementById('calGrid');
@@ -399,9 +393,19 @@ $targetYear = (int)$today->format('Y');
         for (const a of agendaEvents) {
             const subj = a.subjectDesc || a.title || a.authorName || 'Evento';
             const desc = a.notes || a.evtDescr || a.description || '';
-            html += `<div class="cal-detail-event">
-                <h4>${subj}</h4>
-                ${desc ? `<p>${desc}</p>` : ''}
+            const combined = (subj + ' ' + desc);
+            const keyword = getTestKeyword(combined);
+            let eventClass = '';
+            let highlightedSubj = subj;
+            let highlightedDesc = desc;
+            if (keyword) {
+                eventClass = ' test-event';
+                highlightedSubj = highlightKeywordInText(subj, keyword);
+                highlightedDesc = highlightKeywordInText(desc, keyword);
+            }
+            html += `<div class="cal-detail-event${eventClass}">
+                <h4>${highlightedSubj}</h4>
+                ${highlightedDesc ? `<p>${highlightedDesc}</p>` : ''}
             </div>`;
         }
 
@@ -423,7 +427,7 @@ $targetYear = (int)$today->format('Y');
     };
 
     renderCalendar();
-    </script>
+</script>
 
     <?php include COMMON_HTML_FOOT ?>
 </body>

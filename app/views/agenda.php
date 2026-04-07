@@ -78,6 +78,10 @@ $dateForInput = $currentDate->format('Y-m-d');
             font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em;
             padding: 0.15rem 0.5rem; border-radius: 1rem; box-shadow: var(--shadow-sm);
         }
+        .test-keyword {
+            color: var(--test-color);
+            font-weight: 600;
+        }
         .calendar-strip {
             display: flex; gap: 0.25rem; padding: 0 1rem; overflow-x: auto;
         }
@@ -320,18 +324,42 @@ $dateForInput = $currentDate->format('Y-m-d');
 
     <script type="module">
     import { IndexedDBService } from '/js/dbApi.js';
-    import { isLikelyTest, applyTestStyle, removeTestStyle } from '/js/agendaTests.js';
+    import { isLikelyTest, applyTestStyle, removeTestStyle, getTestKeyword } from '/js/agendaTests.js';
 
-    const dbService = new IndexedDBService('gradecraft', 1, {
-        agendaAnnotations: {},
-    });
-
-    // Dati eventi dalle card
     const lessons = <?= json_encode($lessons ?? [], JSON_UNESCAPED_UNICODE) ?>;
     const agenda = <?= json_encode($agenda ?? [], JSON_UNESCAPED_UNICODE) ?>;
 
+    const dbService = new IndexedDBService('gradecraft', 1, {
+        grades: { keyPath: 'ident', autoIncrement: true },
+        agendaAnnotations: {},
+    });
+
+    async function initDB() {
+        try {
+            await dbService.init('grades');
+            await dbService.init('agendaAnnotations');
+            console.log('Database IndexedDB pronto!', 'success');
+            applyAllTestStyles();
+        } catch (error) {
+            console.log(`Errore nell'inizializzazione del database: ${error.message}`, 'error');
+        }
+    }
+
     async function applyAllTestStyles() {
         const annotations = await dbService.getAllAnnotations();
+
+        function aggregateText(event) {
+            return [
+                event.subjectDesc,
+                event.notes,
+                event.lessonArg,
+                event.lessonType,
+                event.title,
+                event.evtDescr,
+                event.description,
+                event.evtNotes,
+            ].filter(Boolean).join(' ');
+        }
 
         function checkAndStyle(events, prefix) {
             events.forEach((evt, idx) => {
@@ -341,23 +369,28 @@ $dateForInput = $currentDate->format('Y-m-d');
 
                 const annotation = annotations[key];
                 let isTest;
+                let keyword = null;
                 if (annotation?.isTest !== undefined) {
                     isTest = annotation.isTest;
+                    if (isTest) {
+                        keyword = getTestKeyword(aggregateText(evt));
+                    }
                 } else {
-                    const text = [evt.subjectDesc, evt.notes, evt.lessonArg, evt.lessonType, evt.title, evt.evtDescr, evt.description, evt.evtNotes].filter(Boolean).join(' ');
-                    isTest = isLikelyTest(text);
+                    keyword = getTestKeyword(aggregateText(evt));
+                    isTest = !!keyword;
                 }
 
-                if (isTest) applyTestStyle(card);
-                else removeTestStyle(card);
+                if (isTest) {
+                    applyTestStyle(card, keyword);
+                } else {
+                    removeTestStyle(card);
+                }
             });
         }
 
         checkAndStyle(lessons, 'lesson');
         checkAndStyle(agenda, 'agenda');
     }
-
-    applyAllTestStyles();
 
     window.toggleTest = async function(key) {
         const card = document.querySelector(`[data-event-idx="${key}"]`);
@@ -369,16 +402,31 @@ $dateForInput = $currentDate->format('Y-m-d');
         if (!evt) return;
 
         const annotation = await dbService.getAnnotation(key);
-        const text = [evt.subjectDesc, evt.notes, evt.lessonArg, evt.lessonType, evt.title, evt.evtDescr, evt.description, evt.evtNotes].filter(Boolean).join(' ');
-        const autoDetected = isLikelyTest(text);
+        const text = [
+            evt.subjectDesc,
+            evt.notes,
+            evt.lessonArg,
+            evt.lessonType,
+            evt.title,
+            evt.evtDescr,
+            evt.description,
+            evt.evtNotes,
+        ].filter(Boolean).join(' ');
+        const autoKeyword = getTestKeyword(text);
+        const autoDetected = !!autoKeyword;
         const current = annotation?.isTest ?? autoDetected;
 
         await dbService.saveAnnotation(key, { isTest: !current });
 
-        if (!current) applyTestStyle(card);
-        else removeTestStyle(card);
+        if (!current) {
+            applyTestStyle(card, autoKeyword);
+        } else {
+            removeTestStyle(card);
+        }
     };
-    </script>
+
+    initDB();
+</script>
 
     <?php include COMMON_HTML_FOOT ?>
 </body>

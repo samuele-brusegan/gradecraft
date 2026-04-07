@@ -90,7 +90,7 @@ class CryptoHelper {
         if ($result === false) {
             throw new RuntimeException('Impossibile salvare la chiave del server in ' . $path);
         }
-        chmod($path, 0600);
+        chmod($path, 0640);
 
         return $rawKey;
     }
