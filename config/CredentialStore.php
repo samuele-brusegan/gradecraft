@@ -7,6 +7,8 @@
 
 class CredentialStore {
     private const DATA_DIR = BASE_PATH . '/data';
+    private const DEVICE_COOKIE_NAME = 'gc_device_id';
+    private const DEVICE_COOKIE_DAYS = 365;
 
     /**
      * Genera un nome file sicuro dall'username.
@@ -17,6 +19,34 @@ class CredentialStore {
     }
 
     /**
+     * Genera o restituisce il device ID da un cookie persistente (httpOnly).
+     * Se il cookie non esiste, ne crea uno nuovo.
+     */
+    public static function getOrCreateDeviceId(): string {
+        if (isset($_COOKIE[self::DEVICE_COOKIE_NAME])) {
+            return $_COOKIE[self::DEVICE_COOKIE_NAME];
+        }
+
+        // Genera un nuovo device ID
+        $deviceId = bin2hex(random_bytes(32));
+
+        setcookie(
+            self::DEVICE_COOKIE_NAME,
+            $deviceId,
+            [
+                'expires' => time() + (self::DEVICE_COOKIE_DAYS * 86400),
+                'path' => '/',
+                'domain' => '',
+                'secure' => true,
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ]
+        );
+
+        return $deviceId;
+    }
+
+    /**
      * Salva le credenziali cifrate per un utente.
      * La chiave è derivata dalla password tramite PBKDF2, cifrata con AES-256-CBC.
      * La chiave derivata viene poi "wrappata" (cifrata) con la chiave del server
@@ -24,7 +54,9 @@ class CredentialStore {
      */
     public static function save(string $username, string $password, string $token = '', string $exp = ''): void {
         if (!is_dir(self::DATA_DIR)) {
-            mkdir(self::DATA_DIR, 0750, true);
+            if (!@mkdir(self::DATA_DIR, 0750, true)) {
+                throw new RuntimeException('Impossibile creare la directory di storage ' . self::DATA_DIR . '. Verifica i permessi del server.');
+            }
         }
 
         // Deriva chiave dalla password (PBKDF2, SHA-256, 100k iterazioni)
@@ -45,10 +77,14 @@ class CredentialStore {
          * (es. al riavvio del server quando la sessione scade). */
         $wrappedKey = CryptoHelper::wrapKey($userKey);
 
+        // Device ID per legare la sessione al dispositivo corrente tramite cookie
+        $deviceId = self::getOrCreateDeviceId();
+
         $data = json_encode([
-            'salt'        => bin2hex($salt),
-            'wrapped_key' => $wrappedKey,
-            'ciphertext'  => $ciphertext,
+            'salt'              => bin2hex($salt),
+            'wrapped_key'       => $wrappedKey,
+            'ciphertext'        => $ciphertext,
+            'device_id'         => $deviceId,
         ], JSON_THROW_ON_ERROR);
 
         $path = self::getFilePath($username);
@@ -100,6 +136,16 @@ class CredentialStore {
     }
 
     /**
+     * Genera un fingerprint del dispositivo corrente (User-Agent + IP).
+     * Usato per legare la sessione al dispositivo originale.
+     */
+    public static function getDeviceFingerprint(): string {
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '';
+        $ua = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        return hash('sha256', $ip . '|' . $ua);
+    }
+
+    /**
      * Restituisce la lista di tutti gli username salvati.
      */
     public static function listUsers(): array {
@@ -144,6 +190,18 @@ class CredentialStore {
                         $plaintext = CryptoHelper::decrypt($data['ciphertext'], $userKey);
                         $credentials = json_decode($plaintext, true);
                         if ($credentials !== null) {
+                            // Verifica device ID
+                            if (isset($data['device_id']) && $data['device_id'] !== self::getOrCreateDeviceId()) {
+                                error_log('CredentialStore::loadStored: device_id non corrispondente, autoload negato');
+                                return null;
+                            }
+
+                            // Se le vecchie credenziali non hanno device_id, lo aggiungiamo ora
+                            if (!isset($data['device_id'])) {
+                                $data['device_id'] = self::getOrCreateDeviceId();
+                                file_put_contents($file, json_encode($data, JSON_THROW_ON_ERROR), LOCK_EX);
+                            }
+
                             return $credentials;
                         }
                     } catch (Throwable $e) {
