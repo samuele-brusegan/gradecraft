@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GradeCraft - Offline</title>
+    <link rel="manifest" href="/pwa/site.webmanifest">
+    <link rel="apple-touch-icon" sizes="180x180" href="/pwa/apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="/pwa/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/pwa/favicon.svg" />
+    <link rel="shortcut icon" href="/pwa/favicon.ico" />
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--background-primary, #f5f5f5);
+            color: var(--text-primary, #333);
+            text-align: center;
+            padding: 1rem;
+        }
+        .offline-content {
+            max-width: 400px;
+        }
+        .offline-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.7;
+        }
+        h1 {
+            margin-bottom: 0.5rem;
+        }
+        p {
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+        .btn {
+            background-color: var(--accent-blue, #007bff);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: var(--accent-blue-dark, #0056b3);
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-content">
+        <div class="offline-icon">📱</div>
+        <h1>Sei offline</h1>
+        <p>GradeCraft non può caricare nuovi dati mentre sei offline. Tuttavia, puoi comunque visualizzare i dati precedentemente sincronizzati.</p>
+        <button class="btn" onclick="window.location.reload()">Riprova</button>
+    </div>
+</body>
+</html>
