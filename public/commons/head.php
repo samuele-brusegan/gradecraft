@@ -25,6 +25,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/pwa/apple-touch-icon.png" />
 <meta name="apple-mobile-web-app-title" content="GradeCraft" />
 <link rel="manifest" href="/pwa/site.webmanifest" />
+<meta name="theme-color" content="#ffffff">
 
 <!-- CSS -->
 <link rel="stylesheet" href="/css/common.css">
@@ -44,5 +45,18 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.setAttribute('data-theme', savedTheme);
     }
 });
+
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+                console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch((error) => {
+                console.log('ServiceWorker registration failed: ', error);
+            });
+    });
+}
 </script>
 

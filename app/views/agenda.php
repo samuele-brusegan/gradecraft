@@ -15,6 +15,10 @@ $dayNum = $currentDate->format('j');
 $monthIt = $mesiIt[(int)$currentDate->format('n') - 1];
 $formattedDate = $dayOfWeek . ', ' . $dayNum . ' ' . $monthIt;
 $dateForInput = $currentDate->format('Y-m-d');
+
+$today = new DateTime();
+$dateInDays = (date_diff($today, $currentDate)->days);
+$dayOffset = ($today > $currentDate) ? ($dateInDays) : -($dateInDays);
 ?>
 
 <html lang="it">
@@ -128,7 +132,7 @@ $dateForInput = $currentDate->format('Y-m-d');
         <div style="padding: 0 1rem 1rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <button onclick="navigateDate(-1)" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 1rem; color: var(--text-primary); cursor: pointer; font-size: 1.2rem; line-height: 1;">←</button>
-                <button onclick="navigateDate(0)" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 1rem; color: var(--text-primary); cursor: pointer; font-size: 0.875rem;">Oggi</button>
+                <button onclick="navigateDate(<?=$dayOffset?>)" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 1rem; color: var(--text-primary); cursor: pointer; font-size: 0.875rem;">Oggi</button>
                 <button onclick="navigateDate(1)" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 0.5rem 1rem; color: var(--text-primary); cursor: pointer; font-size: 1.2rem; line-height: 1;">→</button>
             </div>
             <div>
@@ -314,7 +318,7 @@ $dateForInput = $currentDate->format('Y-m-d');
                     isAnimating = false;
                 }, { once: true });
             });
-        }
+        }        
     });
 
     document.getElementById('datePicker').addEventListener('change', function() {
@@ -336,6 +340,8 @@ $dateForInput = $currentDate->format('Y-m-d');
 
     async function initDB() {
         try {
+            console.log("aaaaa");
+            
             await dbService.init('grades');
             await dbService.init('agendaAnnotations');
             console.log('Database IndexedDB pronto!', 'success');
@@ -381,8 +387,10 @@ $dateForInput = $currentDate->format('Y-m-d');
                 }
 
                 if (isTest) {
+                    console.log("Styling");
                     applyTestStyle(card, keyword);
                 } else {
+                    console.log("Not styling");
                     removeTestStyle(card);
                 }
             });
@@ -425,7 +433,7 @@ $dateForInput = $currentDate->format('Y-m-d');
         }
     };
 
-    initDB();
+    document.addEventListener("DOMContentLoaded",() => {console.log("DOM loaded"); initDB();});
 </script>
 
     <?php include COMMON_HTML_FOOT ?>

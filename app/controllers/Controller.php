@@ -533,6 +533,24 @@ class Controller {
             $agenda = [];
             $error = "API_ERROR";
         }
+        // Rimuovo le lezioni non appartenenti al giorn stesso
+        $agenda = array_filter($agenda, function($l) use ($date_from) {
+            $strEvt = $l['evtDatetimeBegin'];
+            $endEvt = $l['evtDatetimeEnd'];
+
+            $strDate = (new DateTime($strEvt))->format('Ymd');
+            $endDate = (new DateTime($endEvt))->format('Ymd');
+            $date = $date_from;
+            
+            // $date è compreso tra $strDate e $endDate?
+            return $date >= $strDate && $date <= $endDate;
+        });
+        //Che vegano ordinati per ora
+        usort($agenda, function($a, $b) {
+            $aTime = strtotime($a['evtDatetimeBegin']);
+            $bTime = strtotime($b['evtDatetimeBegin']);
+            return $aTime - $bTime;
+        });
         require_once BASE_PATH . '/app/views/agenda.php';
     }
     public function account(): void {

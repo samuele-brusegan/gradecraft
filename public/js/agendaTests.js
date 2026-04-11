@@ -83,12 +83,12 @@ function buildEventId(event) {
 /**
  * Evidenzia tutte le occorrenze della keyword nel testo, avvolgendole in <span class="test-keyword">
  */
-export function highlightKeywordInText(text, keyword) {
-    if (!text || !keyword) return text;
-    const escaped = escapeRegex(keyword);
-    const regex = new RegExp(`(${escaped})`, 'gi');
-    return text.replace(regex, '<span class="test-keyword">$1</span>');
-}
+// export function highlightKeywordInText(text, keyword) {
+//     if (!text || !keyword) return text;
+//     const escaped = escapeRegex(keyword);
+//     const regex = new RegExp(`(${escaped})`, 'gi');
+//     return text.replace(regex, '<span class="test-keyword">$1</span>');
+// }
 
 /**
  * Applica lo stile "verifica" a una card HTML, evidenziando la keyword se fornita
